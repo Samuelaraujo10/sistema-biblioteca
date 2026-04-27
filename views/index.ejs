@@ -1,0 +1,74 @@
+<%- include("partials/header") %>
+
+<section class="page-heading">
+  <h2>🏠 Início</h2>
+  <p>Acompanhe os principais indicadores da biblioteca em tempo real.</p>
+</section>
+
+<section class="overview-section">
+  <div class="cards">
+    <a href="/books" style="text-decoration:none; color:inherit;">
+      <article class="card" style="cursor:pointer; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <h3>📚 Livros cadastrados</h3>
+        <p><%= cards.books %></p>
+      </article>
+    </a>
+    <a href="/students" style="text-decoration:none; color:inherit;">
+      <article class="card" style="cursor:pointer; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <h3>👥 Alunos cadastrados</h3>
+        <p><%= cards.students %></p>
+      </article>
+    </a>
+    <a href="/loans" style="text-decoration:none; color:inherit;">
+      <article class="card" style="cursor:pointer; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <h3>📖 Empréstimos ativos</h3>
+        <p><%= cards.activeLoans %></p>
+      </article>
+    </a>
+  </div>
+</section>
+
+<% if (overdueLoans.length > 0) { %>
+  <div class="alert-overdue" style="margin-top: 24px;">
+    <h3>⚠️ Livros com Devolução Atrasada (<%= overdueLoans.length %>)</h3>
+    <% overdueLoans.forEach((loan) => { %>
+      <div class="alert-item">
+        <strong><%= loan.book_title %></strong><br/>
+        Aluno: <strong><%= loan.student_name %></strong>
+        &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
+        &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
+        <% if (loan.student_phone) { %>
+          &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.student_phone.replace(/\D/g, '') %>" target="_blank" style="color:#155724;">(<%= loan.student_phone %>)</a>
+        <% } %><br/>
+        <span class="overdue-badge">Vencido há <%= Math.abs(loan.daysUntilDue) %> dia(s)</span>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<% if (warningLoans.length > 0) { %>
+  <div class="alert-warning" style="margin-top: 16px;">
+    <h3>⏰ Próximos ao Vencimento (<%= warningLoans.length %>)</h3>
+    <% warningLoans.forEach((loan) => { %>
+      <div class="alert-item">
+        <strong><%= loan.book_title %></strong><br/>
+        Aluno: <strong><%= loan.student_name %></strong>
+        &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
+        &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
+        <% if (loan.student_phone) { %>
+          &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.student_phone.replace(/\D/g, '') %>" target="_blank" style="color:#856404;">(<%= loan.student_phone %>)</a>
+        <% } %><br/>
+        <span class="warning-badge">Vence em <%= loan.daysUntilDue %> dia(s)</span>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<% if (overdueLoans.length === 0 && warningLoans.length === 0) { %>
+  <div style="margin-top: 24px; padding: 16px 20px; background: #f0fdf4; border-left: 4px solid #22c55e; border-radius: 6px; color: #166534;">
+    ✅ Nenhum empréstimo atrasado ou próximo ao vencimento. Tudo em dia!
+  </div>
+<% } %>
+
+<%- include("partials/footer") %>
+

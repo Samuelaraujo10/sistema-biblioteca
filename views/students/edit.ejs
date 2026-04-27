@@ -1,0 +1,53 @@
+<%- include("../partials/header") %>
+
+<section class="page-heading">
+  <h2>✏️ Editar Aluno</h2>
+  <p>Atualize os dados do aluno abaixo.</p>
+</section>
+
+<div class="students-container">
+  <form action="/students/<%= student.id %>?_method=PUT" method="POST" class="panel">
+    <h3>📋 Dados do Aluno</h3>
+    <div class="form-grid">
+      <input type="text" name="name" placeholder="Nome do aluno" value="<%= student.name %>" required />
+      <select name="class_name" required>
+        <option value="">Selecionar Turma</option>
+        <% VALID_CLASSES.forEach(cls => { %>
+          <option value="<%= cls %>" <%= student.class_name === cls ? 'selected' : '' %>><%= cls %></option>
+        <% }) %>
+      </select>
+      <select name="shift" required>
+        <option value="">Selecionar Turno</option>
+        <% VALID_SHIFTS.forEach(s => { %>
+          <option value="<%= s %>" <%= student.shift === s ? 'selected' : '' %>><%= s %></option>
+        <% }) %>
+      </select>
+      <input
+        type="text"
+        name="registration"
+        placeholder="Matrícula (12 dígitos)"
+        value="<%= student.registration %>"
+        required
+        inputmode="numeric"
+        maxlength="12"
+        pattern="[0-9]{12}"
+        title="A matrícula deve ter exatamente 12 dígitos numéricos."
+        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)"
+      />
+      <input
+        type="tel"
+        name="phone"
+        placeholder="Telefone (opcional)"
+        value="<%= student.phone || '' %>"
+        inputmode="numeric"
+        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
+      />
+      <div style="display: flex; gap: 10px; grid-column: 1 / -1;">
+        <button type="submit" style="flex: 1;">Salvar Alterações</button>
+        <a href="/students" style="flex: 1; text-align: center; padding: 10px; background: #64748b; color: white; border-radius: 6px; text-decoration: none; font-weight: 500;">Cancelar</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<%- include("../partials/footer") %>

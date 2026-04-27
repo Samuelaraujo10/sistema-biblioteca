@@ -1,0 +1,33 @@
+<%- include("../partials/header") %>
+
+<section class="page-heading">
+  <h2>✏️ Editar Livro</h2>
+  <p>Atualize os dados do livro abaixo. Se você alterar o ISBN, buscaremos automaticamente uma nova capa.</p>
+</section>
+
+<div class="books-container">
+  <form action="/books/<%= book.id %>?_method=PUT" method="POST" class="panel">
+    <h3>📖 Dados do Livro</h3>
+    <div style="display: flex; gap: 20px; margin-bottom: 24px; align-items: center;">
+      <% if (book.cover_url) { %>
+        <img src="<%= book.cover_url %>" alt="Capa" style="width: 80px; height: 115px; object-fit: cover; border-radius: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.15);">
+      <% } else { %>
+        <div style="width: 80px; height: 115px; background: #e2e8f0; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 32px; border-radius: 6px;">📖</div>
+      <% } %>
+      <p style="color: #64748b; font-size: 0.9rem;">Capa atual. Será atualizada automaticamente ao alterar o ISBN.</p>
+    </div>
+    <div class="form-grid">
+      <input type="text" name="title" placeholder="Título" value="<%= book.title %>" required />
+      <input type="text" name="subtitle" placeholder="Subtítulo (opcional)" value="<%= book.subtitle || '' %>" />
+      <input type="text" name="author" placeholder="Autor" value="<%= book.author %>" required />
+      <input type="text" name="publisher" placeholder="Editora (opcional)" value="<%= book.publisher || '' %>" />
+      <input type="text" name="isbn" placeholder="ISBN (para buscar capa)" value="<%= book.isbn && !book.isbn.startsWith('AUTO') ? book.isbn : '' %>" />
+      <div style="display: flex; gap: 10px; grid-column: 1 / -1;">
+        <button type="submit" style="flex: 1;">Salvar Alterações</button>
+        <a href="/books" style="flex: 1; text-align: center; padding: 10px; background: #64748b; color: white; border-radius: 6px; text-decoration: none; font-weight: 500;">Cancelar</a>
+      </div>
+    </div>
+  </form>
+</div>
+
+<%- include("../partials/footer") %>

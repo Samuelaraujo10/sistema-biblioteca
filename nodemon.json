@@ -1,0 +1,10 @@
+{
+  "ignore": [
+    "*.sqlite",
+    "*.sqlite-*",
+    "database.sqlite*",
+    "backups/*",
+    "cookies.txt"
+  ],
+  "ext": "js,json,ejs,html,css"
+}
