@@ -7,6 +7,7 @@ const homeRoutes = require("./routes/homeRoutes");
 const bookRoutes = require("./routes/bookRoutes");
 const studentRoutes = require("./routes/studentRoutes");
 const loanRoutes = require("./routes/loanRoutes");
+const staffRoutes = require("./routes/staffRoutes");
 const backupRoutes = require("./routes/backupRoutes");
 const authRoutes = require("./routes/authRoutes");
 const errorHandler = require("./middlewares/errorHandler");
@@ -46,6 +47,7 @@ app.use(authRoutes);
 // Rotas protegidas (exigem login)
 app.use("/books", checkAuthenticated, bookRoutes);
 app.use("/students", checkAuthenticated, studentRoutes);
+app.use("/staff", checkAuthenticated, staffRoutes);
 app.use("/loans", checkAuthenticated, loanRoutes);
 app.use("/", checkAuthenticated, homeRoutes);
 app.use("/backups", checkAuthenticated, backupRoutes);

@@ -7,81 +7,89 @@
 
 <div class="students-container">
 
-  <!-- Card colapsável de cadastro -->
-  <div id="new-student-card" style="
-    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
-    border-radius: 16px; padding: 20px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    cursor: pointer; box-shadow: 0 4px 20px rgba(14,165,233,0.3);
-    transition: box-shadow 0.2s, transform 0.2s; margin-bottom: 4px; user-select: none;
-  "
-  onmouseover="this.style.boxShadow='0 8px 30px rgba(14,165,233,0.45)';this.style.transform='translateY(-2px)'"
-  onmouseout="this.style.boxShadow='0 4px 20px rgba(14,165,233,0.3)';this.style.transform=''"
-  onclick="toggleStudentForm()">
-    <div style="display:flex;align-items:center;gap:14px;">
-      <div style="background:rgba(255,255,255,0.2);border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>
-      <div>
-        <div style="color:white;font-weight:700;font-size:1rem;">Cadastrar Novo Aluno</div>
-        <div style="color:rgba(255,255,255,0.75);font-size:0.8rem;margin-top:2px;">Clique para expandir o formulário</div>
-      </div>
+  <!-- Barra de Ações -->
+  <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+    <button id="btn-toggle-form" class="accent" style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:1.1rem">➕</span> Cadastrar Novo Aluno
+    </button>
+    <div style="flex-grow: 1; position: relative; min-width: 250px;">
+      <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: var(--muted);">🔍</span>
+      <input id="student-search" type="text" placeholder="Pesquisar por nome, turma, turno ou matrícula..."
+        oninput="filterStudents(this.value)" style="padding-left: 42px; width: 100%;" />
     </div>
-    <div id="chevron-student" style="color:white;font-size:1.3rem;transition:transform 0.3s;">▼</div>
   </div>
 
-  <div id="student-form-wrapper" style="max-height:0;overflow:hidden;transition:max-height 0.45s cubic-bezier(0.4,0,0.2,1),opacity 0.3s ease;opacity:0;">
-    <form action="/students" method="POST" style="
-      background:white;border:1px solid #bae6fd;border-top:none;
-      border-radius:0 0 16px 16px;padding:28px 24px 24px;
-      box-shadow:0 8px 24px rgba(14,165,233,0.08);">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#0ea5e9;letter-spacing:0.05em;text-transform:uppercase;">Nome *</label>
-          <input type="text" name="name" placeholder="Nome do aluno" required style="border:1.5px solid #bae6fd;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#0ea5e9'" onblur="this.style.borderColor='#bae6fd'"/>
+  <!-- Card de Cadastro Colapsável -->
+  <div id="form-card" class="card" style="margin-bottom: 28px; border-top: 4px solid var(--primary); padding: 0; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.4s var(--t), opacity 0.3s var(--t), padding 0.4s var(--t);">
+    <form action="/students" method="POST" style="margin: 0;">
+      <h3 style="color: var(--text); font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">Novo Cadastro</h3>
+      <div class="form-grid">
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Nome Completo:</label>
+          <input type="text" name="name" required placeholder="Ex: Ana Souza" />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#0ea5e9;letter-spacing:0.05em;text-transform:uppercase;">Turma *</label>
-          <select name="class_name" required style="border:1.5px solid #bae6fd;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;background:white;" onfocus="this.style.borderColor='#0ea5e9'" onblur="this.style.borderColor='#bae6fd'">
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Turma *</label>
+          <select name="class_name" required>
             <option value="">Selecionar Turma</option>
             <option value="1ª série">1ª série</option>
             <option value="2ª série">2ª série</option>
             <option value="3ª série">3ª série</option>
           </select>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#0ea5e9;letter-spacing:0.05em;text-transform:uppercase;">Turno *</label>
-          <select name="shift" required style="border:1.5px solid #bae6fd;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;background:white;" onfocus="this.style.borderColor='#0ea5e9'" onblur="this.style.borderColor='#bae6fd'">
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Turno *</label>
+          <select name="shift" required>
             <option value="">Selecionar Turno</option>
             <option value="Matutino">Matutino</option>
             <option value="Vespertino">Vespertino</option>
           </select>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#0ea5e9;letter-spacing:0.05em;text-transform:uppercase;">Matrícula *</label>
-          <input type="text" name="registration" placeholder="12 dígitos" required inputmode="numeric" maxlength="12" pattern="[0-9]{12}" title="12 dígitos numéricos" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)" style="border:1.5px solid #bae6fd;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#0ea5e9'" onblur="this.style.borderColor='#bae6fd'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Matrícula *</label>
+          <input type="text" name="registration" placeholder="12 dígitos" required inputmode="numeric" maxlength="12" pattern="[0-9]{12}" title="12 dígitos numéricos" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)" />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#0ea5e9;letter-spacing:0.05em;text-transform:uppercase;">Telefone</label>
-          <input type="tel" name="phone" placeholder="opcional" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)" style="border:1.5px solid #bae6fd;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#0ea5e9'" onblur="this.style.borderColor='#bae6fd'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Telefone/WhatsApp:</label>
+          <input type="text" name="phone" placeholder="(99) 99999-9999" />
         </div>
       </div>
-      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
-        <button type="button" onclick="toggleStudentForm()" style="background:#f1f5f9;color:#64748b;border:none;border-radius:9px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:0.92rem;">Cancelar</button>
-        <button type="submit" style="background:linear-gradient(135deg,#0ea5e9,#6366f1);color:white;border:none;border-radius:9px;padding:10px 26px;font-weight:700;cursor:pointer;font-size:0.92rem;box-shadow:0 4px 12px rgba(14,165,233,0.35);">✓ Cadastrar</button>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="secondary" id="btn-cancel-form">Cancelar</button>
+        <button type="submit">Salvar</button>
       </div>
     </form>
   </div>
 
-  <!-- Barra de pesquisa -->
-  <div style="margin:20px 0 12px;position:relative;">
-    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:1rem;pointer-events:none;">🔍</span>
-    <input id="student-search" type="text" placeholder="Pesquisar por nome, turma, turno ou matrícula..."
-      oninput="filterStudents(this.value)"
-      style="width:100%;padding:12px 16px 12px 40px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:0.92rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;background:white;"
-      onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'"/>
-    <span id="student-count" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></span>
-  </div>
+  <script>
+    const btnToggle = document.getElementById('btn-toggle-form');
+    const btnCancel = document.getElementById('btn-cancel-form');
+    const formCard = document.getElementById('form-card');
+
+    function openForm() {
+      formCard.style.padding = '24px';
+      formCard.style.maxHeight = '800px';
+      formCard.style.opacity = '1';
+      btnToggle.style.display = 'none';
+      setTimeout(() => formCard.querySelector('input')?.focus(), 300);
+    }
+
+    function closeForm() {
+      formCard.style.maxHeight = '0';
+      formCard.style.opacity = '0';
+      formCard.style.padding = '0';
+      setTimeout(() => { btnToggle.style.display = 'flex'; }, 300);
+    }
+
+    btnToggle.addEventListener('click', openForm);
+    btnCancel.addEventListener('click', closeForm);
+  </script>
 
   <div class="table-wrap">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 8px;">
+      <h3 style="font-size: 1.1rem; font-weight: 700;">Alunos Cadastrados</h3>
+      <span style="font-size: 0.85rem; color: var(--muted);" id="student-count">Total: <%= students.length %></span>
+    </div>
     <table id="students-table">
       <thead>
         <tr>
@@ -96,11 +104,19 @@
       <tbody>
         <% students.forEach((student) => { %>
           <tr>
-            <td><%= student.name %></td>
+            <td style="font-weight: 600;"><%= student.name %></td>
             <td><%= student.class_name %></td>
             <td><%= student.shift || '-' %></td>
             <td><%= student.registration %></td>
-            <td><%= student.phone || '-' %></td>
+            <td>
+              <% if (student.phone) { %>
+                <a href="https://wa.me/55<%= String(student.phone).replace(/\D/g, '') %>" target="_blank" style="color:var(--success); display:flex; align-items:center; gap:4px;">
+                  📱 <%= student.phone %>
+                </a>
+              <% } else { %>
+                -
+              <% } %>
+            </td>
             <td class="td-actions">
               <a href="/students/<%= student.id %>/edit" class="btn-action btn-edit">✏️ Editar</a>
               <form action="/students/<%= student.id %>?_method=DELETE" method="POST" style="margin:0;">
@@ -116,21 +132,6 @@
 </div>
 
 <script>
-  function toggleStudentForm() {
-    const wrapper = document.getElementById('student-form-wrapper');
-    const card    = document.getElementById('new-student-card');
-    const chevron = document.getElementById('chevron-student');
-    const isOpen  = wrapper.style.maxHeight !== '0px' && wrapper.style.maxHeight !== '';
-    if (isOpen) {
-      wrapper.style.maxHeight = '0'; wrapper.style.opacity = '0';
-      card.style.borderRadius = '16px'; chevron.style.transform = '';
-    } else {
-      wrapper.style.maxHeight = '800px'; wrapper.style.opacity = '1';
-      card.style.borderRadius = '16px 16px 0 0'; chevron.style.transform = 'rotate(180deg)';
-      setTimeout(() => wrapper.querySelector('input')?.focus(), 420);
-    }
-  }
-
   function filterStudents(q) {
     const rows  = document.querySelectorAll('#students-table tbody tr');
     const term  = q.toLowerCase().trim();
@@ -143,7 +144,7 @@
     const countEl = document.getElementById('student-count');
     const noRes   = document.getElementById('no-results-student');
     document.getElementById('search-term-student').textContent = q;
-    countEl.textContent = term ? `${visible} resultado(s)` : '';
+    countEl.textContent = term ? `Filtrados: ${visible}` : `Total: ${rows.length}`;
     noRes.style.display = (term && visible === 0) ? 'block' : 'none';
   }
 </script>

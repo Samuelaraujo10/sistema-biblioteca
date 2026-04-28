@@ -6,26 +6,32 @@ const listDetailed = () =>
       loans.*,
       books.title AS book_title,
       book_copies.copy_id AS copy_id,
-      students.name AS student_name,
+      COALESCE(students.name, staff.name) AS borrower_name,
+      COALESCE(students.phone, staff.phone) AS borrower_phone,
       students.registration AS registration,
-      students.phone AS student_phone,
       students.class_name AS student_class,
-      students.shift AS student_shift
+      students.shift AS student_shift,
+      staff.cpf AS staff_cpf,
+      CASE WHEN loans.student_id IS NOT NULL THEN 'Aluno' ELSE staff.type END AS borrower_type
     FROM loans
     JOIN book_copies ON book_copies.id = loans.copy_id
     JOIN books ON books.id = book_copies.book_id
-    JOIN students ON students.id = loans.student_id
+    LEFT JOIN students ON students.id = loans.student_id
+    LEFT JOIN staff ON staff.id = loans.staff_id
     ORDER BY loans.id DESC
   `);
 
-const create = ({ copy_id: copyId, student_id: studentId, loan_date: loanDate, due_date: dueDate }) =>
-  run(
+const create = ({ copy_id: copyId, borrower_id: borrowerId, borrower_type: borrowerType, loan_date: loanDate, due_date: dueDate }) => {
+  const studentId = borrowerType === 'student' ? borrowerId : null;
+  const staffId = borrowerType === 'staff' ? borrowerId : null;
+  return run(
     `
-      INSERT INTO loans (copy_id, student_id, loan_date, due_date, status)
-      VALUES (?, ?, ?, ?, 'emprestado')
+      INSERT INTO loans (copy_id, student_id, staff_id, loan_date, due_date, status)
+      VALUES (?, ?, ?, ?, ?, 'emprestado')
     `,
-    [copyId, studentId, loanDate, dueDate],
+    [copyId, studentId, staffId, loanDate, dueDate],
   );
+};
 
 const markAsReturned = async (id, returnDate) => {
   // First update the loan status
@@ -41,12 +47,14 @@ const markAsReturned = async (id, returnDate) => {
 
 const countActive = () => all("SELECT COUNT(*) AS total FROM loans WHERE status = 'emprestado'");
 
-const checkStudentHasBook = (studentId, bookId) =>
-  all(`
+const checkBorrowerHasBook = (borrowerId, borrowerType, bookId) => {
+  const condition = borrowerType === 'student' ? 'loans.student_id = ?' : 'loans.staff_id = ?';
+  return all(`
     SELECT COUNT(*) as count FROM loans
     JOIN book_copies ON book_copies.id = loans.copy_id
-    WHERE loans.student_id = ? AND book_copies.book_id = ? AND loans.status = 'emprestado'
-  `, [studentId, bookId]);
+    WHERE ${condition} AND book_copies.book_id = ? AND loans.status = 'emprestado'
+  `, [borrowerId, bookId]);
+};
 
 const getAvailableCopy = (bookId) =>
   all("SELECT id FROM book_copies WHERE book_id = ? AND status = 'available' LIMIT 1", [bookId]);
@@ -57,4 +65,4 @@ const extendDueDate = (id, newDueDate) =>
 const getById = (id) =>
   all("SELECT * FROM loans WHERE id = ?", [id]);
 
-module.exports = { listDetailed, create, markAsReturned, countActive, checkStudentHasBook, getAvailableCopy, extendDueDate, getById };
+module.exports = { listDetailed, create, markAsReturned, countActive, checkBorrowerHasBook, getAvailableCopy, extendDueDate, getById };

@@ -6,115 +6,86 @@
 </section>
 
 <div class="books-container">
-  <!-- Botão flutuante + Form colapsável -->
-  <div id="new-book-card" style="
-    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-    border-radius: 16px;
-    padding: 20px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(99,102,241,0.3);
-    transition: box-shadow 0.2s, transform 0.2s;
-    margin-bottom: 4px;
-    user-select: none;
-  " onmouseover="this.style.boxShadow='0 8px 30px rgba(99,102,241,0.45)';this.style.transform='translateY(-2px)'"
-     onmouseout="this.style.boxShadow='0 4px 20px rgba(99,102,241,0.3)';this.style.transform=''"
-     onclick="toggleNewBookForm()" aria-expanded="false">
-    <div style="display:flex; align-items:center; gap:14px;">
-      <div style="background:rgba(255,255,255,0.2); border-radius:10px; width:42px; height:42px; display:flex; align-items:center; justify-content:center; font-size:20px;">📚</div>
-      <div>
-        <div style="color:white; font-weight:700; font-size:1rem; letter-spacing:0.01em;">Cadastrar Novo Livro</div>
-        <div style="color:rgba(255,255,255,0.75); font-size:0.8rem; margin-top:2px;">Clique para expandir o formulário</div>
-      </div>
+  <!-- Barra de Ações -->
+  <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+    <button id="btn-toggle-form" class="accent" style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:1.1rem">➕</span> Cadastrar Novo Livro
+    </button>
+    <div style="flex-grow: 1; position: relative; min-width: 250px;">
+      <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: var(--muted);">🔍</span>
+      <input id="book-search" type="text" placeholder="Pesquisar por título, autor, editora ou ISBN..."
+        oninput="filterBooks(this.value)" style="padding-left: 42px; width: 100%;" />
     </div>
-    <div id="chevron-icon" style="color:white; font-size:1.3rem; transition: transform 0.3s;">▼</div>
+    <a href="/books/export" class="button accent" style="background-color: var(--success); display:flex; align-items:center; gap:8px;">
+      <span style="font-size:1.1rem">📊</span> Exportar CSV
+    </a>
   </div>
 
-  <div id="new-book-form-wrapper" style="
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-    opacity: 0;
-  ">
-    <form action="/books" method="POST" style="
-      background: white;
-      border: 1px solid #e0e7ff;
-      border-top: none;
-      border-radius: 0 0 16px 16px;
-      padding: 28px 24px 24px;
-      box-shadow: 0 8px 24px rgba(99,102,241,0.08);
-    ">
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px;">
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#6366f1;letter-spacing:0.05em;text-transform:uppercase;">Título *</label>
-          <input type="text" name="title" placeholder="ex: Dom Casmurro" required style="border:1.5px solid #e0e7ff;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e0e7ff'"/>
+  <!-- Card de Cadastro Colapsável -->
+  <div id="form-card" class="card" style="margin-bottom: 28px; border-top: 4px solid var(--primary); padding: 0; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.4s var(--t), opacity 0.3s var(--t), padding 0.4s var(--t);">
+    <form action="/books" method="POST" style="margin: 0;">
+      <h3 style="color: var(--text); font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">Novo Cadastro</h3>
+      <div class="form-grid">
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Título *</label>
+          <input type="text" name="title" placeholder="ex: Dom Casmurro" required />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#6366f1;letter-spacing:0.05em;text-transform:uppercase;">Subtítulo</label>
-          <input type="text" name="subtitle" placeholder="opcional" style="border:1.5px solid #e0e7ff;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e0e7ff'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Subtítulo</label>
+          <input type="text" name="subtitle" placeholder="opcional" />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#6366f1;letter-spacing:0.05em;text-transform:uppercase;">Autor *</label>
-          <input type="text" name="author" placeholder="ex: Machado de Assis" required style="border:1.5px solid #e0e7ff;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e0e7ff'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Autor *</label>
+          <input type="text" name="author" placeholder="ex: Machado de Assis" required />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#6366f1;letter-spacing:0.05em;text-transform:uppercase;">Editora</label>
-          <input type="text" name="publisher" placeholder="opcional" style="border:1.5px solid #e0e7ff;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e0e7ff'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Editora</label>
+          <input type="text" name="publisher" placeholder="opcional" />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#6366f1;letter-spacing:0.05em;text-transform:uppercase;">ISBN</label>
-          <input type="text" name="isbn" placeholder="para buscar capa automaticamente" style="border:1.5px solid #e0e7ff;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e0e7ff'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">ISBN</label>
+          <input type="text" name="isbn" placeholder="para buscar capa automaticamente" />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#6366f1;letter-spacing:0.05em;text-transform:uppercase;">Quantidade *</label>
-          <input type="number" name="quantity" min="1" value="1" required style="border:1.5px solid #e0e7ff;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e0e7ff'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Quantidade *</label>
+          <input type="number" name="quantity" min="1" value="1" required />
         </div>
       </div>
-      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
-        <button type="button" onclick="toggleNewBookForm()" style="background:#f1f5f9;color:#64748b;border:none;border-radius:9px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:0.92rem;">Cancelar</button>
-        <button type="submit" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:9px;padding:10px 26px;font-weight:700;cursor:pointer;font-size:0.92rem;box-shadow:0 4px 12px rgba(99,102,241,0.35);">✓ Cadastrar</button>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="secondary" id="btn-cancel-form">Cancelar</button>
+        <button type="submit">Salvar</button>
       </div>
     </form>
   </div>
 
   <script>
-    function toggleNewBookForm() {
-      const wrapper = document.getElementById('new-book-form-wrapper');
-      const card    = document.getElementById('new-book-card');
-      const chevron = document.getElementById('chevron-icon');
-      const isOpen  = wrapper.style.maxHeight !== '0px' && wrapper.style.maxHeight !== '';
+    const btnToggle = document.getElementById('btn-toggle-form');
+    const btnCancel = document.getElementById('btn-cancel-form');
+    const formCard = document.getElementById('form-card');
 
-      if (isOpen) {
-        wrapper.style.maxHeight = '0';
-        wrapper.style.opacity   = '0';
-        card.style.borderRadius = '16px';
-        chevron.style.transform = '';
-        card.setAttribute('aria-expanded', 'false');
-      } else {
-        wrapper.style.maxHeight = '800px';
-        wrapper.style.opacity   = '1';
-        card.style.borderRadius = '16px 16px 0 0';
-        chevron.style.transform = 'rotate(180deg)';
-        card.setAttribute('aria-expanded', 'true');
-        // Foco no primeiro campo
-        setTimeout(() => wrapper.querySelector('input')?.focus(), 420);
-      }
+    function openForm() {
+      formCard.style.padding = '24px';
+      formCard.style.maxHeight = '800px';
+      formCard.style.opacity = '1';
+      btnToggle.style.display = 'none';
+      setTimeout(() => formCard.querySelector('input')?.focus(), 300);
     }
+
+    function closeForm() {
+      formCard.style.maxHeight = '0';
+      formCard.style.opacity = '0';
+      formCard.style.padding = '0';
+      setTimeout(() => { btnToggle.style.display = 'flex'; }, 300);
+    }
+
+    btnToggle.addEventListener('click', openForm);
+    btnCancel.addEventListener('click', closeForm);
   </script>
 
   <div class="table-wrap">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-      <div style="position:relative;flex:1;min-width:220px;">
-        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:1rem;pointer-events:none;">🔍</span>
-        <input id="book-search" type="text" placeholder="Pesquisar por título, autor, editora ou ISBN..."
-          oninput="filterBooks(this.value)"
-          style="width:100%;padding:11px 16px 11px 40px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:0.92rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;background:white;"
-          onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'"/>
-        <span id="book-count" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></span>
-      </div>
-      <a href="/books/export" class="button" style="background-color: #27ae60; color: white; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; white-space:nowrap;">📊 Exportar CSV</a>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 8px;">
+      <h3 style="font-size: 1.1rem; font-weight: 700;">Acervo Cadastrado</h3>
+      <span style="font-size: 0.85rem; color: var(--muted);" id="book-count">Total: <%= books.length %></span>
     </div>
     <table id="books-table">
       <thead>

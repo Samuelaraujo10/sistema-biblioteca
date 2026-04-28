@@ -2,9 +2,10 @@ const { all } = require("../models/baseModel");
 const loanModel = require("../models/loanModel");
 
 const index = async (req, res) => {
-  const [books, students, activeLoans, loans] = await Promise.all([
+  const [books, students, staff, activeLoans, loans] = await Promise.all([
     all("SELECT COUNT(*) AS total FROM books"),
     all("SELECT COUNT(*) AS total FROM students"),
+    all("SELECT COUNT(*) AS total FROM staff"),
     loanModel.countActive(),
     loanModel.listDetailed(),
   ]);
@@ -28,6 +29,7 @@ const index = async (req, res) => {
     cards: {
       books: books[0].total,
       students: students[0].total,
+      staff: staff[0].total,
       activeLoans: activeLoans[0].total,
     },
     overdueLoans,

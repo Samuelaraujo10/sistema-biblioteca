@@ -1,12 +1,14 @@
 const loanModel = require("../models/loanModel");
 const bookModel = require("../models/bookModel");
 const studentModel = require("../models/studentModel");
+const staffModel = require("../models/staffModel");
 
 const index = async (req, res) => {
-  const [loans, books, students] = await Promise.all([
+  const [loans, books, students, staffList] = await Promise.all([
     loanModel.listDetailed(),
     bookModel.listAll(),
     studentModel.listAll(),
+    staffModel.listAll(),
   ]);
 
   // Add available copies count to each book
@@ -35,12 +37,19 @@ const index = async (req, res) => {
     }
   });
 
-  return res.render("loans/index", { loans, books, students });
+  return res.render("loans/index", { loans, books, students, staffList });
 };
 
 const create = async (req, res) => {
   try {
-    const { id_livro: bookId, student_id: studentId, loan_date: loanDate, due_date: dueDate } = req.body;
+    const { id_livro: bookId, borrower, loan_date: loanDate, due_date: dueDate } = req.body;
+
+    if (!borrower) {
+      return res.status(400).send("É obrigatório selecionar um locatário.");
+    }
+
+    // O formato de borrower esperado é "student_ID" ou "staff_ID"
+    const [borrowerType, borrowerId] = borrower.split('_');
 
     // Valida prazo máximo de 14 dias
     const loanDateObj = new Date(loanDate);
@@ -55,10 +64,10 @@ const create = async (req, res) => {
       return res.status(400).send("A data de devolução não pode ser anterior à data de empréstimo.");
     }
 
-    // Check if student already has this book loaned
-    const hasBookResults = await loanModel.checkStudentHasBook(studentId, bookId);
+    // Check if user already has this book loaned
+    const hasBookResults = await loanModel.checkBorrowerHasBook(borrowerId, borrowerType, bookId);
     if (hasBookResults.length > 0 && hasBookResults[0].count > 0) {
-      return res.status(400).send("Estudante já possui uma cópia deste livro emprestada.");
+      return res.status(400).send("O locatário já possui uma cópia deste livro emprestada.");
     }
 
     // Get an available copy
@@ -74,7 +83,7 @@ const create = async (req, res) => {
     await run("UPDATE book_copies SET status = 'loaned' WHERE id = ?", [copyId]);
 
     // Create loan
-    await loanModel.create({ copy_id: copyId, student_id: studentId, loan_date: loanDate, due_date: dueDate });
+    await loanModel.create({ copy_id: copyId, borrower_id: borrowerId, borrower_type: borrowerType, loan_date: loanDate, due_date: dueDate });
 
     return res.redirect("/loans");
   } catch (error) {

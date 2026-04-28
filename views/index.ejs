@@ -19,6 +19,12 @@
         <p><%= cards.students %></p>
       </article>
     </a>
+    <a href="/staff" style="text-decoration:none; color:inherit;">
+      <article class="card" style="cursor:pointer; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <h3>👔 Funcionários cadastrados</h3>
+        <p><%= cards.staff %></p>
+      </article>
+    </a>
     <a href="/loans" style="text-decoration:none; color:inherit;">
       <article class="card" style="cursor:pointer; transition: transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         <h3>📖 Empréstimos ativos</h3>
@@ -34,11 +40,13 @@
     <% overdueLoans.forEach((loan) => { %>
       <div class="alert-item">
         <strong><%= loan.book_title %></strong><br/>
-        Aluno: <strong><%= loan.student_name %></strong>
-        &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
-        &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
-        <% if (loan.student_phone) { %>
-          &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.student_phone.replace(/\D/g, '') %>" target="_blank" style="color:#155724;">(<%= loan.student_phone %>)</a>
+        Locatário: <strong><%= loan.borrower_name %></strong> (<%= loan.borrower_type %>)
+        <% if (loan.borrower_type === 'Aluno') { %>
+          &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
+          &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
+        <% } %>
+        <% if (loan.borrower_phone) { %>
+          &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.borrower_phone.replace(/\D/g, '') %>" target="_blank" style="color:#155724;">(<%= loan.borrower_phone %>)</a>
         <% } %><br/>
         <span class="overdue-badge">Vencido há <%= Math.abs(loan.daysUntilDue) %> dia(s)</span>
       </div>
@@ -52,11 +60,13 @@
     <% warningLoans.forEach((loan) => { %>
       <div class="alert-item">
         <strong><%= loan.book_title %></strong><br/>
-        Aluno: <strong><%= loan.student_name %></strong>
-        &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
-        &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
-        <% if (loan.student_phone) { %>
-          &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.student_phone.replace(/\D/g, '') %>" target="_blank" style="color:#856404;">(<%= loan.student_phone %>)</a>
+        Locatário: <strong><%= loan.borrower_name %></strong> (<%= loan.borrower_type %>)
+        <% if (loan.borrower_type === 'Aluno') { %>
+          &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
+          &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
+        <% } %>
+        <% if (loan.borrower_phone) { %>
+          &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.borrower_phone.replace(/\D/g, '') %>" target="_blank" style="color:#856404;">(<%= loan.borrower_phone %>)</a>
         <% } %><br/>
         <span class="warning-badge">Vence em <%= loan.daysUntilDue %> dia(s)</span>
       </div>

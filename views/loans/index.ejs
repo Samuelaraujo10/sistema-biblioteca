@@ -18,11 +18,13 @@
       <% overdueLoans.forEach((loan) => { %>
         <div class="alert-item">
           <strong><%= loan.book_title %></strong><br/>
-          Aluno: <strong><%= loan.student_name %></strong>
-          &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
-          &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
-          <% if (loan.student_phone) { %>
-            &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.student_phone.replace(/\D/g, '') %>" target="_blank" style="color:#155724;">(<%= loan.student_phone %>)</a>
+          Locatário: <strong><%= loan.borrower_name %></strong> (<%= loan.borrower_type %>)
+          <% if (loan.borrower_type === 'Aluno') { %>
+            &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
+            &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
+          <% } %>
+          <% if (loan.borrower_phone) { %>
+            &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.borrower_phone.replace(/\D/g, '') %>" target="_blank" style="color:#155724;">(<%= loan.borrower_phone %>)</a>
           <% } %><br/>
           <span class="overdue-badge">Vencido há <%= Math.abs(loan.daysUntilDue) %> dia(s)</span>
         </div>
@@ -36,11 +38,13 @@
       <% warningLoans.forEach((loan) => { %>
         <div class="alert-item">
           <strong><%= loan.book_title %></strong><br/>
-          Aluno: <strong><%= loan.student_name %></strong>
-          &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
-          &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
-          <% if (loan.student_phone) { %>
-            &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.student_phone.replace(/\D/g, '') %>" target="_blank" style="color:#856404;">(<%= loan.student_phone %>)</a>
+          Locatário: <strong><%= loan.borrower_name %></strong> (<%= loan.borrower_type %>)
+          <% if (loan.borrower_type === 'Aluno') { %>
+            &nbsp;|&nbsp; Série: <%= loan.student_class || '-' %>
+            &nbsp;|&nbsp; Turno: <%= loan.student_shift || '-' %>
+          <% } %>
+          <% if (loan.borrower_phone) { %>
+            &nbsp;|&nbsp; 📞 <a href="https://wa.me/55<%= loan.borrower_phone.replace(/\D/g, '') %>" target="_blank" style="color:#856404;">(<%= loan.borrower_phone %>)</a>
           <% } %><br/>
           <span class="warning-badge">Vence em <%= loan.daysUntilDue %> dia(s)</span>
         </div>
@@ -48,36 +52,26 @@
     </div>
   <% } %>
 
-  <!-- Card colapsável de novo empréstimo -->
-  <div id="new-loan-card" style="
-    background: linear-gradient(135deg, #10b981 0%, #0ea5e9 100%);
-    border-radius: 16px; padding: 20px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    cursor: pointer; box-shadow: 0 4px 20px rgba(16,185,129,0.3);
-    transition: box-shadow 0.2s, transform 0.2s; margin-bottom: 4px; user-select: none;
-  "
-  onmouseover="this.style.boxShadow='0 8px 30px rgba(16,185,129,0.45)';this.style.transform='translateY(-2px)'"
-  onmouseout="this.style.boxShadow='0 4px 20px rgba(16,185,129,0.3)';this.style.transform=''"
-  onclick="toggleLoanForm()">
-    <div style="display:flex;align-items:center;gap:14px;">
-      <div style="background:rgba(255,255,255,0.2);border-radius:10px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:20px;">📋</div>
-      <div>
-        <div style="color:white;font-weight:700;font-size:1rem;">Registrar Novo Empréstimo</div>
-        <div style="color:rgba(255,255,255,0.75);font-size:0.8rem;margin-top:2px;">Clique para expandir o formulário</div>
-      </div>
+  <!-- Barra de Ações -->
+  <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+    <button id="btn-toggle-form" class="accent" style="display:flex; align-items:center; gap:8px;">
+      <span style="font-size:1.1rem">➕</span> Registrar Novo Empréstimo
+    </button>
+    <div style="flex-grow: 1; position: relative; min-width: 250px;">
+      <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: var(--muted);">🔍</span>
+      <input id="loan-search" type="text" placeholder="Pesquisar por livro, aluno ou status..."
+        oninput="filterLoans(this.value)" style="padding-left: 42px; width: 100%;" />
     </div>
-    <div id="chevron-loan" style="color:white;font-size:1.3rem;transition:transform 0.3s;">▼</div>
   </div>
 
-  <div id="loan-form-wrapper" style="max-height:0;overflow:hidden;transition:max-height 0.45s cubic-bezier(0.4,0,0.2,1),opacity 0.3s ease;opacity:0;">
-    <form action="/loans" method="POST" style="
-      background:white;border:1px solid #a7f3d0;border-top:none;
-      border-radius:0 0 16px 16px;padding:28px 24px 24px;
-      box-shadow:0 8px 24px rgba(16,185,129,0.08);">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;">
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#10b981;letter-spacing:0.05em;text-transform:uppercase;">Livro *</label>
-          <select name="id_livro" required style="border:1.5px solid #a7f3d0;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;background:white;transition:border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#a7f3d0'">
+  <!-- Card de Cadastro Colapsável -->
+  <div id="form-card" class="card" style="margin-bottom: 28px; border-top: 4px solid var(--primary); padding: 0; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.4s var(--t), opacity 0.3s var(--t), padding 0.4s var(--t);">
+    <form action="/loans" method="POST" style="margin: 0;">
+      <h3 style="color: var(--text); font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">Novo Registro</h3>
+      <div class="form-grid">
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Livro *</label>
+          <select name="id_livro" required>
             <option value="">Selecione o livro</option>
             <% books.forEach((book) => { %>
               <% if (book.availableCopies > 0) { %>
@@ -86,47 +80,48 @@
             <% }) %>
           </select>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#10b981;letter-spacing:0.05em;text-transform:uppercase;">Aluno *</label>
-          <select name="student_id" required style="border:1.5px solid #a7f3d0;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;background:white;transition:border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#a7f3d0'">
-            <option value="">Selecione o aluno</option>
-            <% students.forEach((student) => { %>
-              <option value="<%= student.id %>"><%= student.name %></option>
-            <% }) %>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Locatário *</label>
+          <select name="borrower" required>
+            <option value="">Selecione quem fará o empréstimo</option>
+            <optgroup label="Alunos">
+              <% students.forEach((student) => { %>
+                <option value="student_<%= student.id %>"><%= student.name %></option>
+              <% }) %>
+            </optgroup>
+            <optgroup label="Professores / Funcionários">
+              <% staffList.forEach((staff) => { %>
+                <option value="staff_<%= staff.id %>"><%= staff.name %> (<%= staff.type %>)</option>
+              <% }) %>
+            </optgroup>
           </select>
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#10b981;letter-spacing:0.05em;text-transform:uppercase;">Data Empréstimo *</label>
-          <input type="date" name="loan_date" id="loan_date" required style="border:1.5px solid #a7f3d0;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#a7f3d0'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Data Empréstimo *</label>
+          <input type="date" name="loan_date" id="loan_date" required />
         </div>
-        <div style="display:flex;flex-direction:column;gap:5px;">
-          <label style="font-size:0.78rem;font-weight:600;color:#10b981;letter-spacing:0.05em;text-transform:uppercase;">Devolução Prevista *</label>
-          <input type="date" name="due_date" id="due_date" required style="border:1.5px solid #a7f3d0;border-radius:9px;padding:10px 13px;font-size:0.92rem;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#a7f3d0'"/>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Devolução Prevista *</label>
+          <input type="date" name="due_date" id="due_date" required />
         </div>
       </div>
-      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
-        <button type="button" onclick="toggleLoanForm()" style="background:#f1f5f9;color:#64748b;border:none;border-radius:9px;padding:10px 20px;font-weight:600;cursor:pointer;font-size:0.92rem;">Cancelar</button>
-        <button type="submit" style="background:linear-gradient(135deg,#10b981,#0ea5e9);color:white;border:none;border-radius:9px;padding:10px 26px;font-weight:700;cursor:pointer;font-size:0.92rem;box-shadow:0 4px 12px rgba(16,185,129,0.35);">✓ Registrar</button>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="secondary" id="btn-cancel-form">Cancelar</button>
+        <button type="submit">Salvar</button>
       </div>
     </form>
   </div>
 
-  <!-- Barra de pesquisa -->
-  <div style="margin:20px 0 12px;position:relative;">
-    <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:1rem;pointer-events:none;">🔍</span>
-    <input id="loan-search" type="text" placeholder="Pesquisar por livro, aluno ou status..."
-      oninput="filterLoans(this.value)"
-      style="width:100%;padding:12px 16px 12px 40px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:0.92rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;background:white;"
-      onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#e2e8f0'"/>
-    <span id="loan-count" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:0.8rem;"></span>
-  </div>
-
   <div class="table-wrap">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 8px;">
+      <h3 style="font-size: 1.1rem; font-weight: 700;">Histórico de Empréstimos</h3>
+      <span style="font-size: 0.85rem; color: var(--muted);" id="loan-count">Total: <%= loans.length %></span>
+    </div>
     <table id="loans-table">
       <thead>
         <tr>
           <th>Livro</th>
-          <th>Aluno</th>
+          <th>Locatário</th>
           <th>Data Empréstimo</th>
           <th>Data Devolução Prevista</th>
           <th>Status</th>
@@ -137,7 +132,10 @@
         <% loans.forEach((loan) => { %>
           <tr class="<%= loan.dueDateStatus === 'overdue' ? 'row-overdue' : loan.dueDateStatus === 'warning' ? 'row-warning' : '' %>">
             <td><%= loan.book_title %> (Cópia <%= loan.copy_id %>)</td>
-            <td><%= loan.student_name %></td>
+            <td>
+              <%= loan.borrower_name %><br/>
+              <span style="font-size:0.78rem; color:var(--muted);"><%= loan.borrower_type %></span>
+            </td>
             <td><%= loan.loan_date %></td>
             <td><%= loan.due_date %></td>
             <td>
@@ -201,20 +199,27 @@
     }
   });
 
-  function toggleLoanForm() {
-    const wrapper = document.getElementById('loan-form-wrapper');
-    const card    = document.getElementById('new-loan-card');
-    const chevron = document.getElementById('chevron-loan');
-    const isOpen  = wrapper.style.maxHeight !== '0px' && wrapper.style.maxHeight !== '';
-    if (isOpen) {
-      wrapper.style.maxHeight = '0'; wrapper.style.opacity = '0';
-      card.style.borderRadius = '16px'; chevron.style.transform = '';
-    } else {
-      wrapper.style.maxHeight = '900px'; wrapper.style.opacity = '1';
-      card.style.borderRadius = '16px 16px 0 0'; chevron.style.transform = 'rotate(180deg)';
-      setTimeout(() => wrapper.querySelector('select')?.focus(), 420);
+    const btnToggle = document.getElementById('btn-toggle-form');
+    const btnCancel = document.getElementById('btn-cancel-form');
+    const formCard = document.getElementById('form-card');
+
+    function openForm() {
+      formCard.style.padding = '24px';
+      formCard.style.maxHeight = '800px';
+      formCard.style.opacity = '1';
+      btnToggle.style.display = 'none';
+      setTimeout(() => formCard.querySelector('select')?.focus(), 300);
     }
-  }
+
+    function closeForm() {
+      formCard.style.maxHeight = '0';
+      formCard.style.opacity = '0';
+      formCard.style.padding = '0';
+      setTimeout(() => { btnToggle.style.display = 'flex'; }, 300);
+    }
+
+    btnToggle.addEventListener('click', openForm);
+    btnCancel.addEventListener('click', closeForm);
 
   function filterLoans(q) {
     const rows  = document.querySelectorAll('#loans-table tbody tr');
@@ -226,7 +231,7 @@
       if (match) visible++;
     });
     const countEl = document.getElementById('loan-count');
-    countEl.textContent = term ? `${visible} resultado(s)` : '';
+    countEl.textContent = term ? `Filtrados: ${visible}` : `Total: ${rows.length}`;
   }
 </script>
 

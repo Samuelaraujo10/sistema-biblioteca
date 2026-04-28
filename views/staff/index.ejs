@@ -1,0 +1,154 @@
+<%- include('../partials/header') %>
+
+<div class="page-heading">
+  <h2>Professores e Funcionários</h2>
+  <p>Cadastre e gerencie a equipe da escola. Eles também podem realizar empréstimos de livros no sistema.</p>
+</div>
+
+<!-- Barra de Ações -->
+<div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+  <button id="btn-toggle-form" class="accent" style="display:flex; align-items:center; gap:8px;">
+    <span style="font-size:1.1rem">➕</span> Cadastrar Novo Funcionário
+  </button>
+  <div style="flex-grow: 1; position: relative; min-width: 250px;">
+    <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: var(--muted);">🔍</span>
+    <input type="text" id="searchStaff" placeholder="Buscar por nome, CPF ou tipo..." style="padding-left: 42px; width: 100%;" />
+  </div>
+</div>
+
+<!-- Card de Cadastro Colapsável -->
+<div id="form-card" class="card" style="margin-bottom: 28px; border-top: 4px solid var(--primary); padding: 0; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.4s var(--t), opacity 0.3s var(--t), padding 0.4s var(--t);">
+  <form action="/staff" method="POST" style="margin: 0;">
+    <h3 style="color: var(--text); font-size: 1.1rem; font-weight: 700; margin-bottom: 16px;">Novo Cadastro</h3>
+    <div class="form-grid">
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Nome Completo:</label>
+        <input type="text" name="name" required placeholder="Ex: Ana Souza" />
+      </div>
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">CPF (Apenas números):</label>
+        <input type="text" name="cpf" required pattern="\d{11}" placeholder="00000000000" maxlength="11" />
+      </div>
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Tipo:</label>
+        <select name="type" required>
+          <option value="">Selecione...</option>
+          <option value="Professor">Professor</option>
+          <option value="Funcionário">Funcionário</option>
+        </select>
+      </div>
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Telefone/WhatsApp:</label>
+        <input type="text" name="phone" placeholder="(99) 99999-9999" />
+      </div>
+    </div>
+    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+      <button type="button" class="secondary" id="btn-cancel-form">Cancelar</button>
+      <button type="submit">Salvar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Lista de Funcionários -->
+<div class="table-wrap">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 8px;">
+    <h3 style="font-size: 1.1rem; font-weight: 700;">Equipe Cadastrada</h3>
+    <span style="font-size: 0.85rem; color: var(--muted);" id="staff-count">Total: <%= staffList.length %></span>
+  </div>
+  
+  <table id="staffTable">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>CPF</th>
+        <th>Tipo</th>
+        <th>Telefone</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% if (staffList.length === 0) { %>
+        <tr>
+          <td colspan="6" style="text-align: center; color: var(--muted); padding: 32px 0;">Nenhum funcionário cadastrado.</td>
+        </tr>
+      <% } else { %>
+        <% staffList.forEach((s) => { %>
+          <tr class="staff-row">
+            <td>#<%= s.id %></td>
+            <td style="font-weight: 600;"><%= s.name %></td>
+            <td><%= String(s.cpf).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") %></td>
+            <td>
+              <span class="status-pill <%= s.type === 'Professor' ? 'is-active' : '' %>" style="<%= s.type === 'Funcionário' ? 'background:rgba(59,130,246,0.12); color:#2563eb;' : '' %>">
+                <%= s.type %>
+              </span>
+            </td>
+            <td>
+              <% if (s.phone) { %>
+                <a href="https://wa.me/<%= String(s.phone).replace(/\D/g, '') %>" target="_blank" style="color:var(--success); display:flex; align-items:center; gap:4px;">
+                  📱 <%= s.phone %>
+                </a>
+              <% } else { %>
+                -
+              <% } %>
+            </td>
+            <td class="td-actions">
+              <a href="/staff/<%= s.id %>/edit" class="btn-action btn-edit">✏️ Editar</a>
+              <form action="/staff/<%= s.id %>?_method=DELETE" method="POST" style="margin:0;" onsubmit="return confirm('Tem certeza que deseja excluir <%= s.name %>?');">
+                <button type="submit" class="btn-action btn-delete">🗑️ Excluir</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      <% } %>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // UI Interactions for Staff Form
+  const btnToggle = document.getElementById('btn-toggle-form');
+  const btnCancel = document.getElementById('btn-cancel-form');
+  const formCard = document.getElementById('form-card');
+
+  function openForm() {
+    formCard.style.padding = '24px';
+    formCard.style.maxHeight = '600px';
+    formCard.style.opacity = '1';
+    btnToggle.style.display = 'none';
+  }
+
+  function closeForm() {
+    formCard.style.maxHeight = '0';
+    formCard.style.opacity = '0';
+    formCard.style.padding = '0';
+    setTimeout(() => { btnToggle.style.display = 'flex'; }, 300);
+  }
+
+  btnToggle.addEventListener('click', openForm);
+  btnCancel.addEventListener('click', closeForm);
+
+  // Search filter
+  const searchInput = document.getElementById('searchStaff');
+  const staffRows = document.querySelectorAll('.staff-row');
+  const countDisplay = document.getElementById('staff-count');
+
+  searchInput.addEventListener('input', (e) => {
+    const term = e.target.value.toLowerCase();
+    let visibleCount = 0;
+    
+    staffRows.forEach(row => {
+      const text = row.textContent.toLowerCase();
+      if (text.includes(term)) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+    
+    countDisplay.textContent = term ? `Filtrados: ${visibleCount}` : `Total: ${staffRows.length}`;
+  });
+</script>
+
+<%- include('../partials/footer') %>

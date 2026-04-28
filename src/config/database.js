@@ -66,20 +66,64 @@ const initDatabase = () =>
             });
 
             db.run(`
-              CREATE TABLE IF NOT EXISTS loans (
+              CREATE TABLE IF NOT EXISTS staff (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                copy_id INTEGER NOT NULL,
-                student_id INTEGER NOT NULL,
-                loan_date TEXT NOT NULL,
-                due_date TEXT NOT NULL,
-                return_date TEXT,
-                status TEXT NOT NULL DEFAULT 'emprestado',
-                FOREIGN KEY (copy_id) REFERENCES book_copies(id),
-                FOREIGN KEY (student_id) REFERENCES students(id)
+                name TEXT NOT NULL,
+                cpf TEXT UNIQUE NOT NULL,
+                phone TEXT,
+                type TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
               )
-            `, (loansError) => {
-              if (loansError) return reject(loansError);
-              resolve();
+            `, (staffError) => {
+              if (staffError) return reject(staffError);
+
+              // Migração ou criação da tabela loans
+              db.all("PRAGMA table_info(loans)", (pragmaErr, columns) => {
+                if (pragmaErr) return reject(pragmaErr);
+
+                const hasStaffId = columns && columns.some(c => c.name === 'staff_id');
+                const tableExists = columns && columns.length > 0;
+
+                const createLoansSql = `
+                  CREATE TABLE IF NOT EXISTS loans (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    copy_id INTEGER NOT NULL,
+                    student_id INTEGER,
+                    staff_id INTEGER,
+                    loan_date TEXT NOT NULL,
+                    due_date TEXT NOT NULL,
+                    return_date TEXT,
+                    status TEXT NOT NULL DEFAULT 'emprestado',
+                    FOREIGN KEY (copy_id) REFERENCES book_copies(id),
+                    FOREIGN KEY (student_id) REFERENCES students(id),
+                    FOREIGN KEY (staff_id) REFERENCES staff(id)
+                  )
+                `;
+
+                if (!tableExists) {
+                  db.run(createLoansSql, (createErr) => {
+                    if (createErr) return reject(createErr);
+                    resolve();
+                  });
+                } else if (!hasStaffId) {
+                  // Precisa migrar (tirar NOT NULL do student_id e adicionar staff_id)
+                  db.serialize(() => {
+                    db.run("ALTER TABLE loans RENAME TO loans_old");
+                    db.run(createLoansSql);
+                    db.run(`
+                      INSERT INTO loans (id, copy_id, student_id, loan_date, due_date, return_date, status)
+                      SELECT id, copy_id, student_id, loan_date, due_date, return_date, status FROM loans_old
+                    `);
+                    db.run("DROP TABLE loans_old", (dropErr) => {
+                      if (dropErr) return reject(dropErr);
+                      resolve();
+                    });
+                  });
+                } else {
+                  // Tudo certo
+                  resolve();
+                }
+              });
             });
           });
         });

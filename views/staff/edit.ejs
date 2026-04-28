@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+
+<div class="page-heading">
+  <a href="/staff" style="color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 12px;">
+    <span>←</span> Voltar para Funcionários
+  </a>
+  <h2>Editar Cadastro</h2>
+</div>
+
+<div class="card" style="max-width: 600px; border-top: 4px solid var(--primary);">
+  <form action="/staff/<%= staff.id %>?_method=PATCH" method="POST">
+    <div class="form-grid" style="grid-template-columns: 1fr;">
+      
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Nome Completo:</label>
+        <input type="text" name="name" value="<%= staff.name %>" required />
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">CPF (Apenas números):</label>
+          <input type="text" name="cpf" value="<%= staff.cpf %>" required pattern="\d{11}" maxlength="11" />
+        </div>
+        <div>
+          <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Tipo:</label>
+          <select name="type" required>
+            <% VALID_TYPES.forEach((t) => { %>
+              <option value="<%= t %>" <%= staff.type === t ? 'selected' : '' %>><%= t %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Telefone/WhatsApp:</label>
+        <input type="text" name="phone" value="<%= staff.phone || '' %>" />
+      </div>
+
+    </div>
+    <div style="margin-top: 24px;">
+      <button type="submit" style="width: 100%;">Salvar Alterações</button>
+    </div>
+  </form>
+</div>
+
+<%- include('../partials/footer') %>
