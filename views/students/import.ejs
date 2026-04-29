@@ -1,0 +1,84 @@
+<%- include("../partials/header") %>
+
+<section class="page-heading">
+  <a href="/students" style="color: var(--primary); font-weight: 600; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 12px; text-decoration:none;">
+    <span>←</span> Voltar para Alunos
+  </a>
+  <h2>Importar Alunos</h2>
+  <p>Envie uma planilha CSV exportada do SIGEDUC para revisar antes de gravar.</p>
+</section>
+
+<div class="card" style="margin-bottom: 24px; border-top: 4px solid var(--primary);">
+  <form action="/students/import/preview" method="POST" enctype="multipart/form-data">
+    <div class="form-grid">
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Arquivo CSV</label>
+        <input type="file" name="students_csv" accept=".csv,text/csv" required />
+      </div>
+      <div>
+        <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Colunas aceitas</label>
+        <input type="text" value="matricula, nome, turma, turno, telefone" readonly />
+      </div>
+    </div>
+    <div style="margin-top: 20px; display:flex; justify-content:flex-end;">
+      <button type="submit">Gerar prévia</button>
+    </div>
+  </form>
+</div>
+
+<% if (summary) { %>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px;">
+    <div class="card" style="padding:16px;"><strong><%= summary.total %></strong><br/><span style="color:var(--muted);">linhas lidas</span></div>
+    <div class="card" style="padding:16px;"><strong><%= summary.create %></strong><br/><span style="color:var(--muted);">novos alunos</span></div>
+    <div class="card" style="padding:16px;"><strong><%= summary.update %></strong><br/><span style="color:var(--muted);">atualizações</span></div>
+    <div class="card" style="padding:16px;"><strong><%= summary.error %></strong><br/><span style="color:var(--muted);">com erro</span></div>
+  </div>
+
+  <div class="table-wrap">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; padding:0 8px; flex-wrap:wrap;">
+      <h3 style="font-size: 1.1rem; font-weight: 700;">Prévia da importação</h3>
+      <% if (summary.create + summary.update > 0) { %>
+        <form action="/students/import/confirm" method="POST" style="margin:0;">
+          <button type="submit" <%= summary.error > 0 ? 'class="secondary"' : '' %>>Confirmar importação</button>
+        </form>
+      <% } %>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Linha</th>
+          <th>Matrícula</th>
+          <th>Nome</th>
+          <th>Turma</th>
+          <th>Turno</th>
+          <th>Telefone</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% preview.forEach((row) => { %>
+          <tr>
+            <td><%= row.line %></td>
+            <td><%= row.registration || "-" %></td>
+            <td style="font-weight:600;"><%= row.name || "-" %></td>
+            <td><%= row.class_name || "-" %></td>
+            <td><%= row.shift || "-" %></td>
+            <td><%= row.phone || "-" %></td>
+            <td>
+              <% if (row.action === "create") { %>
+                <span class="status-pill is-active">Criar</span>
+              <% } else if (row.action === "update") { %>
+                <span class="status-pill" style="background:rgba(59,130,246,0.12); color:#2563eb;">Atualizar</span>
+              <% } else { %>
+                <span class="status-pill is-returned">Erro</span>
+                <span style="display:block; font-size:0.78rem; color:var(--danger); margin-top:4px;"><%= row.errors.join(", ") %></span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+<% } %>
+
+<%- include("../partials/footer") %>

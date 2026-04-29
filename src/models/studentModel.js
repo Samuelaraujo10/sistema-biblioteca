@@ -7,6 +7,11 @@ const getById = async (id) => {
   return rows[0] || null;
 };
 
+const getByRegistration = async (registration) => {
+  const rows = await all("SELECT * FROM students WHERE registration = ?", [registration]);
+  return rows[0] || null;
+};
+
 const create = ({ name, class_name: className, shift, phone, registration }) =>
   run("INSERT INTO students (name, class_name, shift, phone, registration) VALUES (?, ?, ?, ?, ?)", [
     name,
@@ -28,4 +33,4 @@ const update = (id, { name, class_name: className, shift, phone, registration })
 
 const remove = (id) => run("DELETE FROM students WHERE id = ?", [id]);
 
-module.exports = { listAll, getById, create, update, remove };
+module.exports = { listAll, getById, getByRegistration, create, update, remove };

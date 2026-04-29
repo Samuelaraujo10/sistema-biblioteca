@@ -1,9 +1,17 @@
 const express = require("express");
+const multer = require("multer");
 const studentController = require("../controllers/studentController");
 
 const router = express.Router();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 },
+});
 
 router.get("/", studentController.index);
+router.get("/import", studentController.importForm);
+router.post("/import/preview", upload.single("students_csv"), studentController.previewImport);
+router.post("/import/confirm", studentController.confirmImport);
 router.get("/:id/edit", studentController.editStudent);
 router.post("/", studentController.create);
 router.put("/:id", studentController.updateStudent);
