@@ -63,6 +63,13 @@ const updateStaff = async (req, res) => {
 };
 
 const remove = async (req, res) => {
+  const loanCount = await staffModel.countLoans(req.params.id);
+  if (loanCount > 0) {
+    return res
+      .status(400)
+      .send("Não é possível excluir este cadastro porque ele possui empréstimos vinculados.");
+  }
+
   await staffModel.remove(req.params.id);
   return res.redirect("/staff");
 };

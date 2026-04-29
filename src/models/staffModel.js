@@ -16,6 +16,9 @@ const update = (id, { name, cpf, phone, type }) =>
     id,
   ]);
 
+const countLoans = (id) =>
+  all("SELECT COUNT(*) AS total FROM loans WHERE staff_id = ?", [id]).then((res) => res[0].total);
+
 const remove = (id) => run("DELETE FROM staff WHERE id = ?", [id]);
 
-module.exports = { listAll, getById, create, update, remove };
+module.exports = { listAll, getById, create, update, countLoans, remove };

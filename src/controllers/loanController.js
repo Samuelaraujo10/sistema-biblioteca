@@ -3,6 +3,16 @@ const bookModel = require("../models/bookModel");
 const studentModel = require("../models/studentModel");
 const staffModel = require("../models/staffModel");
 
+const parseBorrower = (borrower) => {
+  const match = String(borrower || "").match(/^(student|staff)_(\d+)$/);
+  if (!match) return null;
+
+  return {
+    type: match[1],
+    id: match[2],
+  };
+};
+
 const index = async (req, res) => {
   const [loans, books, students, staffList] = await Promise.all([
     loanModel.listDetailed(),
@@ -44,12 +54,19 @@ const create = async (req, res) => {
   try {
     const { id_livro: bookId, borrower, loan_date: loanDate, due_date: dueDate } = req.body;
 
-    if (!borrower) {
+    const parsedBorrower = parseBorrower(borrower);
+    if (!parsedBorrower) {
       return res.status(400).send("É obrigatório selecionar um locatário.");
     }
 
-    // O formato de borrower esperado é "student_ID" ou "staff_ID"
-    const [borrowerType, borrowerId] = borrower.split('_');
+    const borrowerExists =
+      parsedBorrower.type === "student"
+        ? await studentModel.getById(parsedBorrower.id)
+        : await staffModel.getById(parsedBorrower.id);
+
+    if (!borrowerExists) {
+      return res.status(400).send("Locatário não encontrado.");
+    }
 
     // Valida prazo máximo de 14 dias
     const loanDateObj = new Date(loanDate);
@@ -65,7 +82,11 @@ const create = async (req, res) => {
     }
 
     // Check if user already has this book loaned
-    const hasBookResults = await loanModel.checkBorrowerHasBook(borrowerId, borrowerType, bookId);
+    const hasBookResults = await loanModel.checkBorrowerHasBook(
+      parsedBorrower.id,
+      parsedBorrower.type,
+      bookId,
+    );
     if (hasBookResults.length > 0 && hasBookResults[0].count > 0) {
       return res.status(400).send("O locatário já possui uma cópia deste livro emprestada.");
     }
@@ -83,7 +104,13 @@ const create = async (req, res) => {
     await run("UPDATE book_copies SET status = 'loaned' WHERE id = ?", [copyId]);
 
     // Create loan
-    await loanModel.create({ copy_id: copyId, borrower_id: borrowerId, borrower_type: borrowerType, loan_date: loanDate, due_date: dueDate });
+    await loanModel.create({
+      copy_id: copyId,
+      borrower_id: parsedBorrower.id,
+      borrower_type: parsedBorrower.type,
+      loan_date: loanDate,
+      due_date: dueDate,
+    });
 
     return res.redirect("/loans");
   } catch (error) {

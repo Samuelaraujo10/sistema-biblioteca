@@ -22,6 +22,10 @@ const listDetailed = () =>
   `);
 
 const create = ({ copy_id: copyId, borrower_id: borrowerId, borrower_type: borrowerType, loan_date: loanDate, due_date: dueDate }) => {
+  if (!["student", "staff"].includes(borrowerType)) {
+    return Promise.reject(new Error("Tipo de locatário inválido."));
+  }
+
   const studentId = borrowerType === 'student' ? borrowerId : null;
   const staffId = borrowerType === 'staff' ? borrowerId : null;
   return run(
@@ -48,6 +52,10 @@ const markAsReturned = async (id, returnDate) => {
 const countActive = () => all("SELECT COUNT(*) AS total FROM loans WHERE status = 'emprestado'");
 
 const checkBorrowerHasBook = (borrowerId, borrowerType, bookId) => {
+  if (!["student", "staff"].includes(borrowerType)) {
+    return Promise.reject(new Error("Tipo de locatário inválido."));
+  }
+
   const condition = borrowerType === 'student' ? 'loans.student_id = ?' : 'loans.staff_id = ?';
   return all(`
     SELECT COUNT(*) as count FROM loans

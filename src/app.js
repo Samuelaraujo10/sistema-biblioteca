@@ -14,6 +14,13 @@ const errorHandler = require("./middlewares/errorHandler");
 const { checkAuthenticated } = require("./middlewares/authMiddleware");
 
 const app = express();
+const cookieSecure =
+  process.env.SESSION_COOKIE_SECURE === "true" ||
+  (process.env.NODE_ENV === "production" && process.env.SESSION_COOKIE_SECURE !== "false");
+
+if (cookieSecure) {
+  app.set("trust proxy", 1);
+}
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "..", "views"));
@@ -28,7 +35,7 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    secure: false, // manter false: sistema roda em HTTP local (sem HTTPS)
+    secure: cookieSecure,
     maxAge: 24 * 60 * 60 * 1000 // 24 horas
   }
 }));

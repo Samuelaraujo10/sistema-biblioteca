@@ -4,6 +4,32 @@ const sqlite3 = require("sqlite3").verbose();
 const dbPath = path.join(__dirname, "..", "..", "database.sqlite");
 const db = new sqlite3.Database(dbPath);
 
+const runSql = (sql) =>
+  new Promise((resolve, reject) => {
+    db.run(sql, (error) => {
+      if (error) return reject(error);
+      return resolve();
+    });
+  });
+
+const migrateLoansTable = async (createLoansSql) => {
+  await runSql("BEGIN TRANSACTION");
+
+  try {
+    await runSql("ALTER TABLE loans RENAME TO loans_old");
+    await runSql(createLoansSql);
+    await runSql(`
+      INSERT INTO loans (id, copy_id, student_id, loan_date, due_date, return_date, status)
+      SELECT id, copy_id, student_id, loan_date, due_date, return_date, status FROM loans_old
+    `);
+    await runSql("DROP TABLE loans_old");
+    await runSql("COMMIT");
+  } catch (error) {
+    await runSql("ROLLBACK").catch(() => {});
+    throw error;
+  }
+};
+
 const initDatabase = () =>
   new Promise((resolve, reject) => {
     db.serialize(() => {
@@ -107,18 +133,7 @@ const initDatabase = () =>
                   });
                 } else if (!hasStaffId) {
                   // Precisa migrar (tirar NOT NULL do student_id e adicionar staff_id)
-                  db.serialize(() => {
-                    db.run("ALTER TABLE loans RENAME TO loans_old");
-                    db.run(createLoansSql);
-                    db.run(`
-                      INSERT INTO loans (id, copy_id, student_id, loan_date, due_date, return_date, status)
-                      SELECT id, copy_id, student_id, loan_date, due_date, return_date, status FROM loans_old
-                    `);
-                    db.run("DROP TABLE loans_old", (dropErr) => {
-                      if (dropErr) return reject(dropErr);
-                      resolve();
-                    });
-                  });
+                  migrateLoansTable(createLoansSql).then(resolve).catch(reject);
                 } else {
                   // Tudo certo
                   resolve();
