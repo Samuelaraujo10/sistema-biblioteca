@@ -1,16 +1,21 @@
 const errorHandler = (error, req, res, _next) => {
-  if (error && error.status) {
-    return res.status(error.status).send(error.message);
-  }
+  const errorMessage = error && error.message ? error.message : "Erro interno no servidor.";
+  const isDatabaseConstraint = errorMessage.includes("SQLITE_CONSTRAINT");
+  const status = error && error.status ? error.status : isDatabaseConstraint ? 400 : 500;
+  const message = isDatabaseConstraint
+    ? "Erro de validacao no banco. Verifique campos unicos como matricula."
+    : errorMessage;
 
-  if (error && error.message.includes("SQLITE_CONSTRAINT")) {
-    return res.status(400).send(
-      "Erro de validacao no banco. Verifique campos unicos como matricula.",
-    );
+  if (status < 500 && req.method !== "GET" && req.session) {
+    req.session.flash = {
+      type: "error",
+      message,
+    };
+    return res.redirect(req.get("Referrer") || "/");
   }
 
   console.error(error);
-  return res.status(500).send("Erro interno no servidor.");
+  return res.status(status).send(message);
 };
 
 module.exports = errorHandler;

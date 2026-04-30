@@ -50,7 +50,7 @@
         </div>
         <div>
           <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Matrícula *</label>
-          <input type="text" name="registration" placeholder="12 dígitos" required inputmode="numeric" maxlength="12" pattern="[0-9]{12}" title="12 dígitos numéricos" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,12)" />
+          <input type="text" name="registration" placeholder="11 dígitos" required inputmode="numeric" maxlength="11" pattern="[0-9]{11}" title="11 dígitos numéricos" oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)" />
         </div>
         <div>
           <label style="display:block; margin-bottom:6px; font-size:0.88rem; color:var(--muted);">Telefone/WhatsApp:</label>
@@ -131,6 +131,19 @@
       </tbody>
     </table>
     <p id="no-results-student" style="display:none;text-align:center;color:#94a3b8;padding:24px;font-size:0.95rem;">Nenhum aluno encontrado para "<span id="search-term-student"></span>"</p>
+  </div>
+
+  <div class="panel" style="margin-top: 20px;">
+    <h3>📂 Importar Alunos via CSV</h3>
+    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 14px;">Envie um arquivo CSV com os alunos para cadastro em lote. <a href="/students/template" style="color:#3b82f6;">Baixar modelo CSV</a></p>
+    <form action="/students/import" method="POST" enctype="multipart/form-data" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <input class="import-file-input" type="file" name="csvFile" accept=".csv" required />
+      <button type="submit">Importar</button>
+    </form>
+    <form action="/students/diagnose" method="POST" enctype="multipart/form-data" style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 10px;">
+      <input class="import-file-input" type="file" name="csvFile" accept=".csv" required />
+      <button type="submit" class="secondary">Diagnosticar CSV</button>
+    </form>
   </div>
 </div>
 

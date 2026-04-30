@@ -74,6 +74,11 @@
       </div>
     </header>
     <main class="container">
+      <% if (flash) { %>
+        <div class="flash-alert flash-<%= flash.type || 'info' %>" role="alert">
+          <%= flash.message %>
+        </div>
+      <% } %>
 
     <script>
       // ── Dark Mode ─────────────────────────────────────────

@@ -148,7 +148,8 @@
                 <span class="badge-warning">Alerta</span>
               <% } %>
             </td>
-            <td class="td-actions">
+            <td class="loan-actions-cell">
+              <div class="td-actions loan-actions">
               <% if (loan.status === "emprestado") { %>
                 <form action="/loans/<%= loan.id %>/return?_method=PATCH" method="POST" style="margin:0;">
                   <button type="submit" class="btn-action btn-return">✅ Devolver</button>
@@ -161,6 +162,7 @@
               <% } else { %>
                 <span style="font-size:0.85rem;color:#6b7280;">✔ Devolvido em <%= loan.return_date %></span>
               <% } %>
+              </div>
             </td>
           </tr>
         <% }) %>

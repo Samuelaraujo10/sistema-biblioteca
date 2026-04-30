@@ -2,6 +2,9 @@ const studentModel = require("../models/studentModel");
 
 const VALID_CLASSES = ["1ª série", "2ª série", "3ª série"];
 const VALID_SHIFTS = ["Matutino", "Vespertino"];
+const REGISTRATION_PATTERN = /^\d{11}$/;
+const REGISTRATION_ERROR = "A matricula deve conter exatamente 11 digitos numericos.";
+
 const IMPORT_HEADER_ALIASES = {
   registration: ["matricula", "matricula sigeduc", "registration"],
   name: ["nome", "nome do aluno", "aluno", "estudante", "name"],
@@ -17,6 +20,12 @@ const normalizeText = (value) =>
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
+const readCsvContent = (file) => {
+  let content = file.buffer.toString("utf-8").replace(/^\uFEFF/, "");
+  if (content.includes("\uFFFD")) content = file.buffer.toString("latin1");
+  return content;
+};
+
 const parseCsvLine = (line, delimiter) => {
   const cells = [];
   let current = "";
@@ -26,10 +35,10 @@ const parseCsvLine = (line, delimiter) => {
     const char = line[i];
     const next = line[i + 1];
 
-    if (char === '"' && inQuotes && next === '"') {
-      current += '"';
+    if (char === "\"" && inQuotes && next === "\"") {
+      current += "\"";
       i += 1;
-    } else if (char === '"') {
+    } else if (char === "\"") {
       inQuotes = !inQuotes;
     } else if (char === delimiter && !inQuotes) {
       cells.push(current.trim());
@@ -88,9 +97,15 @@ const validateImportedStudent = (student) => {
   if (!student.name) errors.push("nome ausente");
   if (!student.class_name) errors.push("turma ausente");
   if (!student.shift) errors.push("turno ausente");
-  if (!/^\d{12}$/.test(student.registration)) errors.push("matrícula deve ter 12 dígitos");
+  if (!REGISTRATION_PATTERN.test(student.registration)) errors.push("matricula deve ter 11 digitos");
 
   return errors;
+};
+
+const setFlash = (req, type, message) => {
+  if (req.session) {
+    req.session.flash = { type, message };
+  }
 };
 
 const index = async (req, res) => {
@@ -102,10 +117,11 @@ const importForm = async (req, res) => res.render("students/import", { preview: 
 
 const previewImport = async (req, res) => {
   if (!req.file) {
-    return res.status(400).send("Envie um arquivo CSV para importar.");
+    setFlash(req, "error", "Envie um arquivo CSV para importar.");
+    return res.redirect("/students/import");
   }
 
-  const rows = parseCsv(req.file.buffer.toString("utf8"));
+  const rows = parseCsv(readCsvContent(req.file));
   const seenRegistrations = new Set();
   const preview = [];
 
@@ -115,7 +131,7 @@ const previewImport = async (req, res) => {
     const duplicateInFile = student.registration && seenRegistrations.has(student.registration);
 
     if (duplicateInFile) {
-      errors.push("matrícula repetida no arquivo");
+      errors.push("matricula repetida no arquivo");
     }
 
     if (student.registration) {
@@ -169,6 +185,7 @@ const confirmImport = async (req, res) => {
   }
 
   req.session.studentImportPreview = null;
+  setFlash(req, "success", `${validRows.length} aluno(s) importado(s) com sucesso.`);
   return res.redirect("/students");
 };
 
@@ -176,8 +193,8 @@ const create = async (req, res) => {
   const { name, class_name: className, shift, phone, registration } = req.body;
   const normalizedRegistration = String(registration || "").replace(/\D/g, "");
 
-  if (!/^\d{12}$/.test(normalizedRegistration)) {
-    const error = new Error("A matricula deve conter exatamente 12 digitos numericos.");
+  if (!REGISTRATION_PATTERN.test(normalizedRegistration)) {
+    const error = new Error(REGISTRATION_ERROR);
     error.status = 400;
     throw error;
   }
@@ -189,7 +206,7 @@ const create = async (req, res) => {
   }
 
   if (!VALID_SHIFTS.includes(shift)) {
-    const error = new Error("Turno inválido. Escolha entre Matutino, Vespertino.");
+    const error = new Error("Turno invalido. Escolha entre Matutino, Vespertino.");
     error.status = 400;
     throw error;
   }
@@ -206,7 +223,7 @@ const create = async (req, res) => {
 
 const editStudent = async (req, res) => {
   const student = await studentModel.getById(req.params.id);
-  if (!student) return res.status(404).send("Aluno não encontrado.");
+  if (!student) return res.status(404).send("Aluno nao encontrado.");
   return res.render("students/edit", { student, VALID_CLASSES, VALID_SHIFTS });
 };
 
@@ -214,8 +231,8 @@ const updateStudent = async (req, res) => {
   const { name, class_name: className, shift, phone, registration } = req.body;
   const normalizedRegistration = String(registration || "").replace(/\D/g, "");
 
-  if (!/^\d{12}$/.test(normalizedRegistration)) {
-    const error = new Error("A matricula deve conter exatamente 12 digitos numericos.");
+  if (!REGISTRATION_PATTERN.test(normalizedRegistration)) {
+    const error = new Error(REGISTRATION_ERROR);
     error.status = 400;
     throw error;
   }
@@ -227,7 +244,7 @@ const updateStudent = async (req, res) => {
   }
 
   if (!VALID_SHIFTS.includes(shift)) {
-    const error = new Error("Turno inválido. Escolha entre Matutino, Vespertino.");
+    const error = new Error("Turno invalido. Escolha entre Matutino, Vespertino.");
     error.status = 400;
     throw error;
   }
@@ -247,6 +264,95 @@ const remove = async (req, res) => {
   return res.redirect("/students");
 };
 
+const downloadTemplate = (req, res) => {
+  const csv = "\uFEFF" + "nome;turma;turno;matricula;telefone\n" +
+    "\"Ana Souza\";\"1ª série\";\"Matutino\";\"12345678901\";\"(85) 99999-9999\"\n" +
+    "\"Bruno Lima\";\"2ª série\";\"Vespertino\";\"12345678902\";\"\"\n";
+
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", "attachment; filename=\"modelo_importacao_alunos.csv\"");
+  res.send(csv);
+};
+
+const diagnoseCsv = (req, res) => {
+  if (!req.file) {
+    setFlash(req, "error", "Nenhum arquivo enviado.");
+    return res.redirect("/students");
+  }
+
+  const rows = parseCsv(readCsvContent(req.file));
+  const sample = rows.slice(0, 5).map((row) => {
+    const student = normalizeImportedStudent(row);
+    return `Linha ${row.line}: nome="${student.name || "???"}" | matricula="${student.registration || "???"}"`;
+  });
+
+  setFlash(req, "info", `CSV lido com ${rows.length} linha(s). ${sample.join(" | ")}`);
+  return res.redirect("/students");
+};
+
+const importCsv = async (req, res) => {
+  try {
+    if (!req.file) {
+      setFlash(req, "error", "Nenhum arquivo enviado.");
+      return res.redirect("/students");
+    }
+
+    const rows = parseCsv(readCsvContent(req.file));
+    if (!rows.length) {
+      setFlash(req, "error", "Arquivo CSV vazio ou invalido.");
+      return res.redirect("/students");
+    }
+
+    const results = { ok: 0, errors: [] };
+
+    for (const row of rows) {
+      const student = normalizeImportedStudent(row);
+      const errors = validateImportedStudent(student);
+
+      if (errors.length) {
+        results.errors.push(`Linha ${row.line}: ${errors.join(", ")}`);
+        continue;
+      }
+
+      if (!VALID_CLASSES.includes(student.class_name)) {
+        results.errors.push(`Linha ${row.line} ("${student.name}"): turma invalida.`);
+        continue;
+      }
+
+      if (!VALID_SHIFTS.includes(student.shift)) {
+        results.errors.push(`Linha ${row.line} ("${student.name}"): turno invalido.`);
+        continue;
+      }
+
+      try {
+        const existingStudent = await studentModel.getByRegistration(student.registration);
+        if (existingStudent) {
+          await studentModel.update(existingStudent.id, student);
+        } else {
+          await studentModel.create(student);
+        }
+        results.ok += 1;
+      } catch (error) {
+        const message = error.message && error.message.includes("UNIQUE")
+          ? `matricula "${student.registration}" ja existe no banco`
+          : error.message;
+        results.errors.push(`Linha ${row.line} ("${student.name}"): ${message}`);
+      }
+    }
+
+    const message = results.errors.length
+      ? `${results.ok} aluno(s) importado(s). ${results.errors.length} linha(s) com erro: ${results.errors.slice(0, 3).join(" | ")}`
+      : `${results.ok} de ${rows.length} aluno(s) importado(s) com sucesso.`;
+
+    setFlash(req, results.errors.length ? "error" : "success", message);
+    return res.redirect("/students");
+  } catch (error) {
+    console.error("Erro ao importar CSV de alunos:", error);
+    setFlash(req, "error", "Erro ao processar o arquivo CSV. Detalhes: " + error.message);
+    return res.redirect("/students");
+  }
+};
+
 module.exports = {
   index,
   importForm,
@@ -256,4 +362,7 @@ module.exports = {
   editStudent,
   updateStudent,
   remove,
+  downloadTemplate,
+  importCsv,
+  diagnoseCsv,
 };

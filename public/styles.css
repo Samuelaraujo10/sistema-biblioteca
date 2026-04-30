@@ -364,7 +364,8 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
-button {
+button,
+.button {
   border: none;
   border-radius: 12px;
   padding: 11px 22px;
@@ -378,17 +379,27 @@ button {
   transition: all var(--t);
   position: relative;
   overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+  white-space: nowrap;
 }
-button::after {
+button::after,
+.button::after {
   content: '';
   position: absolute;
   inset: 0;
   background: rgba(255,255,255,0);
   transition: background var(--t);
 }
-button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--primary-glow); }
-button:hover::after { background: rgba(255,255,255,0.08); }
-button:active { transform: translateY(0); }
+button:hover,
+.button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--primary-glow); }
+button:hover::after,
+.button:hover::after { background: rgba(255,255,255,0.08); }
+button:active,
+.button:active { transform: translateY(0); }
 
 button.danger {
   background: linear-gradient(135deg,#ef4444,#dc2626);
@@ -396,20 +407,51 @@ button.danger {
 }
 button.danger:hover { box-shadow: 0 8px 24px rgba(239,68,68,0.35); }
 
-button.secondary {
+button.secondary,
+.button.secondary {
   background: var(--surface-alt);
   color: var(--text);
   border: 1.5px solid var(--line);
   box-shadow: none;
 }
-button.secondary:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 12px var(--primary-glow); }
+button.secondary:hover,
+.button.secondary:hover { border-color: var(--primary); color: var(--primary); box-shadow: 0 4px 12px var(--primary-glow); }
 
-button.accent {
+button.accent,
+.button.accent {
   background: linear-gradient(135deg,#4facfe,#00f2fe);
   box-shadow: 0 4px 14px rgba(79,172,254,0.3);
   color: #fff;
 }
-button.accent:hover { box-shadow: 0 8px 24px rgba(79,172,254,0.45); }
+button.accent:hover,
+.button.accent:hover { box-shadow: 0 8px 24px rgba(79,172,254,0.45); }
+
+.import-file-input {
+  flex: 1;
+  min-width: 240px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.import-file-input::file-selector-button {
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-alt);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  margin-right: 12px;
+  padding: 9px 14px;
+  transition: border-color var(--t), color var(--t), background var(--t), box-shadow var(--t);
+}
+
+.import-file-input::file-selector-button:hover {
+  background: var(--surface);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
 
 /* ── Table Action Buttons ────────────────────────────────── */
 .btn-action {
@@ -446,6 +488,15 @@ button.accent:hover { box-shadow: 0 8px 24px rgba(79,172,254,0.45); }
   gap: 6px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+#loans-table .loan-actions-cell {
+  min-width: 220px;
+  vertical-align: middle;
+}
+
+#loans-table .loan-actions {
+  justify-content: flex-start;
 }
 
 /* ── Table ───────────────────────────────────────────────── */
@@ -529,6 +580,43 @@ tr:hover td { background: var(--surface-hover); }
   transition: background var(--t);
 }
 [data-theme="dark"] .alert-item { background: rgba(255,255,255,0.05); }
+
+.flash-alert {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 18px;
+  padding: 13px 16px;
+}
+
+.flash-error {
+  background: rgba(254,226,226,0.92);
+  border-color: rgba(239,68,68,0.22);
+  color: #991b1b;
+}
+
+.flash-success {
+  background: rgba(220,252,231,0.92);
+  border-color: rgba(22,163,74,0.22);
+  color: #166534;
+}
+
+.flash-info {
+  background: var(--surface);
+  color: var(--text);
+}
+
+[data-theme="dark"] .flash-error {
+  background: rgba(127,29,29,0.35);
+  color: #fecaca;
+}
+
+[data-theme="dark"] .flash-success {
+  background: rgba(20,83,45,0.35);
+  color: #bbf7d0;
+}
 
 /* ── Auth Page ───────────────────────────────────────────── */
 .auth-page {

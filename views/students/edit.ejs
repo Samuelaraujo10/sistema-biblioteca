@@ -36,14 +36,14 @@
         <input
         type="text"
         name="registration"
-        placeholder="Matrícula (12 dígitos)"
+        placeholder="Matrícula (11 dígitos)"
         value="<%= student.registration %>"
         required
         inputmode="numeric"
-        maxlength="12"
-        pattern="[0-9]{12}"
-        title="A matrícula deve ter exatamente 12 dígitos numéricos."
-        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 12)"
+        maxlength="11"
+        pattern="[0-9]{11}"
+        title="A matrícula deve ter exatamente 11 dígitos numéricos."
+        oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
       />
       </div>
       <div>

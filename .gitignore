@@ -1,6 +1,13 @@
 node_modules/
 .env
 backups/
+dist/
+build/
+coverage/
+.env
+*.log
+package-lock.json
+
 
 # Banco de dados
 *.sqlite

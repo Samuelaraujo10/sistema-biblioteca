@@ -9,7 +9,10 @@ const upload = multer({
 });
 
 router.get("/", studentController.index);
+router.get("/template", studentController.downloadTemplate);
 router.get("/import", studentController.importForm);
+router.post("/import", upload.single("csvFile"), studentController.importCsv);
+router.post("/diagnose", upload.single("csvFile"), studentController.diagnoseCsv);
 router.post("/import/preview", upload.single("students_csv"), studentController.previewImport);
 router.post("/import/confirm", studentController.confirmImport);
 router.get("/:id/edit", studentController.editStudent);

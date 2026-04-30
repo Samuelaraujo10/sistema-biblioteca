@@ -45,6 +45,8 @@ app.use((req, res, next) => {
   res.locals.user = req.session.userId || null;
   res.locals.userName = req.session.userName || null;
   res.locals.role = req.session.role || null;
+  res.locals.flash = req.session.flash || null;
+  delete req.session.flash;
   next();
 });
 
