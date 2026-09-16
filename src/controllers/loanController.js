@@ -153,4 +153,38 @@ const extendLoan = async (req, res) => {
   }
 };
 
-module.exports = { index, create, markAsReturned, extendLoan };
+const clearLoans = async (req, res) => {
+  try {
+    const backupService = require("../services/backupService");
+    const { run } = require("../models/baseModel");
+
+    // 1. Create a backup of loans before clearing
+    await backupService.exportLoans();
+
+    // 2. Delete all loans and set all book copies to available
+    await run("BEGIN TRANSACTION");
+    try {
+      await run("DELETE FROM loans");
+      await run("UPDATE book_copies SET status = 'available'");
+      await run("COMMIT");
+    } catch (dbError) {
+      await run("ROLLBACK").catch(() => {});
+      throw dbError;
+    }
+
+    req.session.flash = {
+      type: "success",
+      message: "Histórico de empréstimos limpo com sucesso! Um backup foi criado na pasta 'backups'."
+    };
+    return res.redirect("/loans");
+  } catch (error) {
+    console.error("Erro ao limpar histórico de empréstimos:", error);
+    req.session.flash = {
+      type: "error",
+      message: "Erro ao limpar histórico de empréstimos: " + error.message
+    };
+    return res.redirect("/loans");
+  }
+};
+
+module.exports = { index, create, markAsReturned, extendLoan, clearLoans };

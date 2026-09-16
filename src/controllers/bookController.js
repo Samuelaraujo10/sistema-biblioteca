@@ -282,4 +282,40 @@ const importCsv = async (req, res) => {
   }
 };
 
-module.exports = { index, create, editBook, updateBook, remove, exportExcel, downloadTemplate, importCsv, diagnoseCsv };
+const clearBooks = async (req, res) => {
+  try {
+    const backupService = require("../services/backupService");
+    const { run } = require("../models/baseModel");
+
+    // 1. Criar backups antes de limpar
+    await backupService.exportBooks();
+    await backupService.exportLoans();
+
+    // 2. Apagar registros de forma transacional para manter consistência
+    await run("BEGIN TRANSACTION");
+    try {
+      await run("DELETE FROM loans");
+      await run("DELETE FROM book_copies");
+      await run("DELETE FROM books");
+      await run("COMMIT");
+    } catch (dbError) {
+      await run("ROLLBACK").catch(() => {});
+      throw dbError;
+    }
+
+    req.session.flash = {
+      type: "success",
+      message: "Acervo de livros e histórico de empréstimos limpos com sucesso! Backups criados na pasta 'backups'."
+    };
+    return res.redirect("/books");
+  } catch (error) {
+    console.error("Erro ao limpar acervo de livros:", error);
+    req.session.flash = {
+      type: "error",
+      message: "Erro ao limpar acervo de livros: " + error.message
+    };
+    return res.redirect("/books");
+  }
+};
+
+module.exports = { index, create, editBook, updateBook, remove, exportExcel, downloadTemplate, importCsv, diagnoseCsv, clearBooks };

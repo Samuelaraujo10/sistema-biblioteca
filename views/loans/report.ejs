@@ -1,0 +1,879 @@
+<%- include("../partials/header") %>
+
+<style>
+/* ── Página de Relatório Modernizada ────────────────────────── */
+
+/* Estatísticas */
+.report-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.stat-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--t), box-shadow var(--t), border-color var(--t), background var(--t);
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: var(--stat-accent, var(--primary));
+  transition: height 0.25s var(--t);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+  border-color: var(--stat-accent, var(--primary));
+}
+
+.stat-card:hover::before {
+  height: 6px;
+}
+
+.stat-card.is-open {
+  border-color: var(--stat-accent, var(--primary));
+  box-shadow: 0 0 0 3px var(--stat-glow, var(--primary-glow));
+}
+
+.stat-card.s-active     { --stat-accent: var(--success); --stat-glow: rgba(34, 197, 94, 0.22); }
+.stat-card.s-returned   { --stat-accent: var(--primary); --stat-glow: var(--primary-glow); }
+.stat-card.s-overdue    { --stat-accent: var(--danger); --stat-glow: rgba(239, 68, 68, 0.22); }
+
+[data-theme="dark"] .stat-card.s-active { --stat-glow: rgba(63, 185, 80, 0.25); }
+[data-theme="dark"] .stat-card.s-overdue { --stat-glow: rgba(248, 81, 73, 0.25); }
+
+.stat-card .sc-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.stat-card .sc-value {
+  font-size: 2.6rem;
+  font-weight: 800;
+  line-height: 1.1;
+  background: linear-gradient(135deg, var(--text) 0%, var(--muted) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card.s-active .sc-value {
+  background: linear-gradient(135deg, var(--success), #15803d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card.s-returned .sc-value {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card.s-overdue .sc-value {
+  background: linear-gradient(135deg, var(--danger), #b91c1c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card .sc-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.stat-card .sc-hint {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-top: 8px;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: color var(--t), opacity var(--t);
+}
+
+.stat-card:hover .sc-hint,
+.stat-card.is-open .sc-hint {
+  color: var(--stat-accent, var(--primary));
+  opacity: 1;
+}
+
+/* Painéis colapsáveis */
+.detail-panel {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  margin-bottom: 0;
+  transition: max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s var(--t), margin 0.3s var(--t);
+}
+
+.detail-panel.is-open {
+  max-height: 4000px;
+  opacity: 1;
+  margin-bottom: 24px;
+}
+
+.detail-panel .table-wrap {
+  padding: 24px;
+  border-top-width: 4px !important;
+  border-top-style: solid;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 0 4px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.detail-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.detail-title .dt-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dt-color, var(--primary));
+  box-shadow: 0 0 8px var(--dt-color, var(--primary));
+  flex-shrink: 0;
+}
+
+.detail-count {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  background: var(--surface-alt);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-weight: 600;
+}
+
+.detail-panel .badge-overdue,
+.detail-panel .badge-warning {
+  margin-left: 0;
+}
+
+/* Layout de duas colunas */
+.report-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 800px) {
+  .report-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Tipo Locatário */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+}
+
+.type-pill {
+  background: var(--surface-alt);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 16px;
+  text-align: center;
+  transition: border-color var(--t), box-shadow var(--t), transform var(--t);
+}
+
+.type-pill:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.type-pill .tp-value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.type-pill .tp-label {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Gráfico de Barras */
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  width: 70px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-align: right;
+  flex-shrink: 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bar-track {
+  flex: 1;
+  background: var(--surface-alt);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
+  height: 24px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  box-shadow: 0 0 12px var(--primary-glow);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  min-width: 32px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-2);
+  width: 28px;
+  flex-shrink: 0;
+  text-align: left;
+}
+
+/* Ranking de Livros */
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: var(--surface-alt);
+  border: 1.5px solid var(--line);
+  color: var(--muted);
+}
+
+.rank-badge.gold {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-color: #fbbf24;
+  color: #92400e;
+  box-shadow: 0 2px 6px rgba(251, 191, 36, 0.25);
+}
+
+.rank-badge.silver {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  border-color: #94a3b8;
+  color: #334155;
+  box-shadow: 0 2px 6px rgba(148, 163, 184, 0.2);
+}
+
+.rank-badge.bronze {
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border-color: #fdba74;
+  color: #9a3412;
+  box-shadow: 0 2px 6px rgba(253, 186, 116, 0.25);
+}
+
+[data-theme="dark"] .rank-badge.gold {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(251, 191, 36, 0.1));
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .rank-badge.silver {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(148, 163, 184, 0.1));
+  border-color: #94a3b8;
+  color: #cbd5e1;
+}
+
+[data-theme="dark"] .rank-badge.bronze {
+  background: linear-gradient(135deg, rgba(253, 186, 116, 0.2), rgba(253, 186, 116, 0.1));
+  border-color: #fdba74;
+  color: #fdba74;
+}
+
+/* Meses e taxas */
+.month-pill {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--primary-glow);
+  color: var(--primary);
+  border-radius: 8px;
+  padding: 4px 12px;
+  border: 1px solid rgba(88, 166, 255, 0.1);
+}
+
+.rate-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rate-track {
+  width: 80px;
+  height: 8px;
+  background: var(--surface-alt);
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rate-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+  border-radius: 999px;
+}
+
+.rate-text {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-2);
+}
+
+/* Estados vazios */
+.empty-state {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.empty-state .es-icon {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  filter: grayscale(0.2);
+}
+
+/* Barra de Filtro */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding: 24px;
+}
+
+.filter-bar .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 160px;
+}
+
+.filter-bar label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+/* Rodapé */
+.report-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 24px;
+  padding-bottom: 8px;
+}
+
+.report-footer a {
+  color: var(--muted);
+  border-bottom: 1.5px solid var(--line);
+  padding-bottom: 2px;
+  transition: color var(--t), border-color var(--t);
+}
+
+.report-footer a:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+@media print {
+  .filter-bar, .topbar, .detail-panel, .page-heading button, .report-footer {
+    display: none !important;
+  }
+}
+</style>
+
+<!-- Cabeçalho -->
+<section class="page-heading" style="display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:16px; margin-bottom:28px;">
+  <div>
+    <h2>📊 Relatório de Empréstimos</h2>
+    <p>Período selecionado: <strong><%= startDate %></strong> a <strong><%= endDate %></strong></p>
+  </div>
+  <button class="button secondary" id="btn-export" onclick="doExport()" style="display:inline-flex; align-items:center; gap:8px;">📥 Exportar Excel</button>
+</section>
+
+<!-- Filtro de período -->
+<form class="filter-bar card" method="GET" action="/reports/loans">
+  <div class="filter-group">
+    <label for="rpt-start">Data inicial</label>
+    <input id="rpt-start" type="date" name="start" value="<%= startDate %>" required />
+  </div>
+  <div class="filter-group">
+    <label for="rpt-end">Data final</label>
+    <input id="rpt-end" type="date" name="end" value="<%= endDate %>" required />
+  </div>
+  <div style="display:flex; gap:12px; align-items:center;">
+    <button type="submit" class="button" style="display:inline-flex; align-items:center; gap:6px;">🔍 Filtrar</button>
+    <a href="/reports/loans" class="button secondary" style="display:inline-flex; align-items:center; gap:6px;">🔄 Resetar</a>
+  </div>
+</form>
+
+<!-- ── Cards de estatísticas clicáveis ─────────────────── -->
+<div class="report-stats">
+
+  <div class="card stat-card" id="card-total" onclick="togglePanel('total',this)" role="button" tabindex="0" aria-expanded="false">
+    <span class="sc-icon">📋</span>
+    <span class="sc-value"><%= stats.total %></span>
+    <span class="sc-label">Total de Empréstimos</span>
+    <span class="sc-hint">▾ clique para ver</span>
+  </div>
+
+  <div class="card stat-card s-active" id="card-active" onclick="togglePanel('active',this)" role="button" tabindex="0" aria-expanded="false">
+    <span class="sc-icon">📖</span>
+    <span class="sc-value"><%= stats.active %></span>
+    <span class="sc-label">Em Aberto</span>
+    <span class="sc-hint">▾ clique para ver</span>
+  </div>
+
+  <div class="card stat-card s-returned" id="card-returned" onclick="togglePanel('returned',this)" role="button" tabindex="0" aria-expanded="false">
+    <span class="sc-icon">✅</span>
+    <span class="sc-value"><%= stats.returned %></span>
+    <span class="sc-label">Devolvidos</span>
+    <span class="sc-hint">▾ clique para ver</span>
+  </div>
+
+  <div class="card stat-card s-overdue" id="card-overdue" onclick="togglePanel('overdue',this)" role="button" tabindex="0" aria-expanded="false">
+    <span class="sc-icon">⚠️</span>
+    <span class="sc-value"><%= stats.overdue %></span>
+    <span class="sc-label">Vencidos (em aberto)</span>
+    <span class="sc-hint">▾ clique para ver</span>
+  </div>
+
+</div>
+
+<!-- ── Painel: Todos ─────────────────────────────────────── -->
+<div class="detail-panel" id="panel-total">
+  <div class="table-wrap card" style="border-top-color: var(--primary);">
+    <div class="detail-header">
+      <span class="detail-title"><span class="dt-dot" style="--dt-color:var(--primary);"></span>Todos os Empréstimos do Período</span>
+      <span class="detail-count"><%= loansTotal.length %> registro(s)</span>
+    </div>
+    <% if (loansTotal.length === 0) { %>
+      <div class="empty-state"><div class="es-icon">📭</div><p>Nenhum empréstimo no período.</p></div>
+    <% } else { %>
+      <div style="overflow-x:auto;">
+      <table style="min-width:580px;">
+        <thead><tr><th>Livro</th><th>Locatário</th><th>Empréstimo</th><th>Dev. Prevista</th><th>Situação</th></tr></thead>
+        <tbody>
+          <% for (let i0 = 0; i0 < loansTotal.length; i0++) { let l = loansTotal[i0]; let od = l.status === 'emprestado' && l.days_late > 0; %>
+          <tr class="<%= od ? 'row-overdue' : '' %>">
+            <td><strong><%= l.book_title %></strong><br/><span style="font-size:.78rem;color:var(--muted);">Cópia <%= l.copy_id %></span></td>
+            <td>
+              <%= l.borrower_name %><br/>
+              <span style="font-size:.78rem;color:var(--muted);">
+                <%= l.borrower_type %><%= l.student_class ? ' · ' + l.student_class : '' %>
+              </span>
+              <% if(l.borrower_phone){%>
+                <br/>
+                <a href="https://wa.me/55<%=l.borrower_phone.replace(/\D/g,'')%>" target="_blank" style="font-size:.75rem;color:var(--primary); font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-top:4px;">
+                  <span>💬</span> <%=l.borrower_phone%>
+                </a>
+              <%}%>
+            </td>
+            <td style="white-space:nowrap;"><%= new Date(l.loan_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td style="white-space:nowrap;"><%= new Date(l.due_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td><% if(od){%><span class="badge-overdue">Vencido há <%=l.days_late%> dia(s)</span><%}else{%><span class="status-pill is-active">No prazo</span><%}%></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ── Painel: Em Aberto ─────────────────────────────────── -->
+<div class="detail-panel" id="panel-active">
+  <div class="table-wrap card" style="border-top-color: var(--success);">
+    <div class="detail-header">
+      <span class="detail-title"><span class="dt-dot" style="--dt-color:var(--success);"></span>Empréstimos em Aberto (no prazo)</span>
+      <span class="detail-count"><%= loansActive.length %> registro(s)</span>
+    </div>
+    <% if (loansActive.length === 0) { %>
+      <div class="empty-state"><div class="es-icon">📭</div><p>Nenhum empréstimo em aberto no prazo.</p></div>
+    <% } else { %>
+      <div style="overflow-x:auto;">
+      <table style="min-width:580px;">
+        <thead><tr><th>Livro</th><th>Locatário</th><th>Empréstimo</th><th>Dev. Prevista</th><th>Situação</th></tr></thead>
+        <tbody>
+          <% for (let i1 = 0; i1 < loansActive.length; i1++) { let la = loansActive[i1]; %>
+          <tr>
+            <td><strong><%= la.book_title %></strong><br/><span style="font-size:.78rem;color:var(--muted);">Cópia <%= la.copy_id %></span></td>
+            <td>
+              <%= la.borrower_name %><br/>
+              <span style="font-size:.78rem;color:var(--muted);">
+                <%= la.borrower_type %><%= la.student_class ? ' · ' + la.student_class : '' %>
+              </span>
+              <% if(la.borrower_phone){%>
+                <br/>
+                <a href="https://wa.me/55<%=la.borrower_phone.replace(/\D/g,'')%>" target="_blank" style="font-size:.75rem;color:var(--primary); font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-top:4px;">
+                  <span>💬</span> <%=la.borrower_phone%>
+                </a>
+              <%}%>
+            </td>
+            <td style="white-space:nowrap;"><%= new Date(la.loan_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td style="white-space:nowrap;"><%= new Date(la.due_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td><span class="status-pill is-active">No prazo</span></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ── Painel: Devolvidos ────────────────────────────────── -->
+<div class="detail-panel" id="panel-returned">
+  <div class="table-wrap card" style="border-top-color: var(--primary);">
+    <div class="detail-header">
+      <span class="detail-title"><span class="dt-dot" style="--dt-color:var(--primary);"></span>Empréstimos Devolvidos</span>
+      <span class="detail-count"><%= loansReturned.length %> registro(s)</span>
+    </div>
+    <% if (loansReturned.length === 0) { %>
+      <div class="empty-state"><div class="es-icon">📭</div><p>Nenhum empréstimo devolvido no período.</p></div>
+    <% } else { %>
+      <div style="overflow-x:auto;">
+      <table style="min-width:580px;">
+        <thead><tr><th>Livro</th><th>Locatário</th><th>Empréstimo</th><th>Dev. Prevista</th><th>Devolvido em</th></tr></thead>
+        <tbody>
+          <% for (let i2 = 0; i2 < loansReturned.length; i2++) { let lr = loansReturned[i2]; %>
+          <tr>
+            <td><strong><%= lr.book_title %></strong><br/><span style="font-size:.78rem;color:var(--muted);">Cópia <%= lr.copy_id %></span></td>
+            <td>
+              <%= lr.borrower_name %><br/>
+              <span style="font-size:.78rem;color:var(--muted);">
+                <%= lr.borrower_type %><%= lr.student_class ? ' · ' + lr.student_class : '' %>
+              </span>
+              <% if(lr.borrower_phone){%>
+                <br/>
+                <a href="https://wa.me/55<%=lr.borrower_phone.replace(/\D/g,'')%>" target="_blank" style="font-size:.75rem;color:var(--primary); font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-top:4px;">
+                  <span>💬</span> <%=lr.borrower_phone%>
+                </a>
+              <%}%>
+            </td>
+            <td style="white-space:nowrap;"><%= new Date(lr.loan_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td style="white-space:nowrap;"><%= new Date(lr.due_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td style="white-space:nowrap;"><% if(lr.return_date){%><span class="status-pill is-returned"><%= new Date(lr.return_date+'T12:00:00').toLocaleDateString('pt-BR') %></span><%}else{%><span style="color:var(--muted);">—</span><%}%></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ── Painel: Vencidos ──────────────────────────────────── -->
+<div class="detail-panel" id="panel-overdue">
+  <div class="table-wrap card" style="border-top-color: var(--danger);">
+    <div class="detail-header">
+      <span class="detail-title"><span class="dt-dot" style="--dt-color:var(--danger);"></span>Empréstimos Vencidos (em aberto)</span>
+      <span class="detail-count"><%= loansOverdue.length %> registro(s)</span>
+    </div>
+    <% if (loansOverdue.length === 0) { %>
+      <div class="empty-state"><div class="es-icon">✅</div><p>Nenhum empréstimo vencido. Tudo em dia!</p></div>
+    <% } else { %>
+      <div style="overflow-x:auto;">
+      <table style="min-width:580px;">
+        <thead><tr><th>Livro</th><th>Locatário</th><th>Empréstimo</th><th>Dev. Prevista</th><th>Atraso</th></tr></thead>
+        <tbody>
+          <% for (let i3 = 0; i3 < loansOverdue.length; i3++) { let lv = loansOverdue[i3]; %>
+          <tr class="row-overdue">
+            <td><strong><%= lv.book_title %></strong><br/><span style="font-size:.78rem;color:var(--muted);">Cópia <%= lv.copy_id %></span></td>
+            <td>
+              <%= lv.borrower_name %><br/>
+              <span style="font-size:.78rem;color:var(--muted);">
+                <%= lv.borrower_type %><%= lv.student_class ? ' · ' + lv.student_class : '' %>
+              </span>
+              <% if(lv.borrower_phone){%>
+                <br/>
+                <a href="https://wa.me/55<%=lv.borrower_phone.replace(/\D/g,'')%>" target="_blank" style="font-size:.75rem;color:var(--primary); font-weight:600; display:inline-flex; align-items:center; gap:4px; margin-top:4px;">
+                  <span>💬</span> <%=lv.borrower_phone%>
+                </a>
+              <%}%>
+            </td>
+            <td style="white-space:nowrap;"><%= new Date(lv.loan_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td style="white-space:nowrap;"><%= new Date(lv.due_date+'T12:00:00').toLocaleDateString('pt-BR') %></td>
+            <td><span class="badge-overdue">Vencido há <%= lv.days_late %> dia(s)</span></td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- ── Tipo locatário + Mensal ───────────────────────────── -->
+<div class="report-row">
+
+  <div class="panel card">
+    <p class="panel-title">👥 Por Tipo de Locatário</p>
+    <% if (byBorrowerType.length === 0) { %>
+      <div class="empty-state"><div class="es-icon">📭</div><p>Nenhum dado no período.</p></div>
+    <% } else { %>
+      <div class="type-grid">
+        <% for (let ib = 0; ib < byBorrowerType.length; ib++) { let bt = byBorrowerType[ib]; %>
+          <div class="type-pill">
+            <div class="tp-value"><%= bt.total_loans %></div>
+            <div class="tp-label"><%= bt.tipo %></div>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="panel card">
+    <p class="panel-title">📅 Evolução Mensal</p>
+    <% if (byMonth.length === 0) { %>
+      <div class="empty-state"><div class="es-icon">📭</div><p>Nenhum dado no período.</p></div>
+    <% } else { %>
+      <%
+        let maxBarVal = 1;
+        for (let im = 0; im < byMonth.length; im++) { if (byMonth[im].total_loans > maxBarVal) maxBarVal = byMonth[im].total_loans; }
+        let shortNames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+      %>
+      <div class="bar-chart">
+        <% for (let im2 = 0; im2 < byMonth.length; im2++) {
+          let bm = byMonth[im2];
+          let bmParts = bm.mes.split('-');
+          let bmPct = Math.round((bm.total_loans / maxBarVal) * 100);
+          let bmLbl = shortNames[parseInt(bmParts[1],10)-1] + '/' + bmParts[0].slice(2);
+        %>
+          <div class="bar-row">
+            <span class="bar-label"><%= bmLbl %></span>
+            <div class="bar-track"><div class="bar-fill" style="width:<%= bmPct %>%"><%= bm.total_loans %></div></div>
+            <span class="bar-count"><%= bm.total_loans %></span>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+
+</div>
+
+<!-- ── Ranking de Livros ─────────────────────────────────── -->
+<div class="table-wrap card" style="padding:24px; margin-bottom:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:0 4px;">
+    <p class="panel-title" style="margin:0;">📚 Livros Mais Emprestados</p>
+    <% if (byBook.length > 0) { %><span style="font-size:.82rem;color:var(--muted);"><%= byBook.length %> título(s)</span><% } %>
+  </div>
+  <% if (byBook.length === 0) { %>
+    <div class="empty-state"><div class="es-icon">📭</div><p>Nenhum empréstimo no período.</p></div>
+  <% } else { %>
+    <div style="overflow-x:auto;">
+    <table style="min-width:520px;">
+      <thead><tr><th style="width:46px;">#</th><th>Livro</th><th>Autor</th><th style="text-align:center;">Total</th><th style="text-align:center;">Em Aberto</th><th style="text-align:center;">Devolvidos</th></tr></thead>
+      <tbody>
+        <% for (let ik = 0; ik < byBook.length; ik++) { let bk = byBook[ik]; let bkRc = ik===0?'gold':ik===1?'silver':ik===2?'bronze':''; %>
+          <tr>
+            <td><span class="rank-badge <%= bkRc %>"><%= ik+1 %></span></td>
+            <td style="font-weight:600;"><%= bk.title %></td>
+            <td style="color:var(--muted);font-size:.85rem;"><%= bk.author || '—' %></td>
+            <td style="text-align:center;font-weight:800;font-size:1.1rem;"><%= bk.total_loans %></td>
+            <td style="text-align:center;"><% if(bk.active>0){%><span class="status-pill is-active"><%= bk.active %></span><%}else{%><span style="color:var(--muted);">—</span><%}%></td>
+            <td style="text-align:center;"><% if(bk.returned>0){%><span class="status-pill is-returned"><%= bk.returned %></span><%}else{%><span style="color:var(--muted);">—</span><%}%></td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+    </div>
+  <% } %>
+</div>
+
+<!-- ── Detalhamento por Mês ──────────────────────────────── -->
+<% if (byMonth.length > 0) { %>
+<div class="table-wrap card" style="padding:24px; margin-bottom:20px;">
+  <p class="panel-title" style="padding:0 4px;">🗓️ Detalhamento por Mês</p>
+  <%
+    let longNames = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  %>
+  <div style="overflow-x:auto;">
+  <table style="min-width:480px;">
+    <thead><tr><th>Mês</th><th style="text-align:center;">Total</th><th style="text-align:center;">Em Aberto</th><th style="text-align:center;">Devolvidos</th><th style="text-align:center;">Taxa de Devolução</th></tr></thead>
+    <tbody>
+      <% for (let imm = 0; imm < byMonth.length; imm++) {
+        let mm = byMonth[imm];
+        let mmParts = mm.mes.split('-');
+        let mmLabel = longNames[parseInt(mmParts[1],10)-1] + ' ' + mmParts[0];
+        let mmRate  = mm.total_loans > 0 ? Math.round((mm.returned / mm.total_loans) * 100) : 0;
+      %>
+        <tr>
+          <td><span class="month-pill"><%= mmLabel %></span></td>
+          <td style="text-align:center;font-weight:700;"><%= mm.total_loans %></td>
+          <td style="text-align:center;"><% if(mm.active>0){%><span class="status-pill is-active"><%= mm.active %></span><%}else{%><span style="color:var(--muted);">—</span><%}%></td>
+          <td style="text-align:center;"><span class="status-pill is-returned"><%= mm.returned %></span></td>
+          <td style="text-align:center;">
+            <div class="rate-wrap" style="justify-content:center;">
+              <div class="rate-track"><div class="rate-fill" style="width:<%= mmRate %>%;"></div></div>
+              <span class="rate-text"><%= mmRate %>%</span>
+            </div>
+          </td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<% } %>
+
+<p class="report-footer">
+  Gerado em <%= new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' }) %>
+  &nbsp;·&nbsp;
+  <a href="/loans">← Voltar para Empréstimos</a>
+</p>
+
+<script>
+  var panelMap = {
+    total:    { panelId: 'panel-total',    cardId: 'card-total'    },
+    active:   { panelId: 'panel-active',   cardId: 'card-active'   },
+    returned: { panelId: 'panel-returned', cardId: 'card-returned' },
+    overdue:  { panelId: 'panel-overdue',  cardId: 'card-overdue'  }
+  };
+
+  function updateHint(cardEl, isOpen) {
+    var hint = cardEl.querySelector('.sc-hint');
+    if (hint) hint.textContent = isOpen ? '▴ fechar' : '▾ clique para ver';
+    cardEl.setAttribute('aria-expanded', String(isOpen));
+  }
+
+  function togglePanel(key, cardEl) {
+    var entry  = panelMap[key];
+    var panel  = document.getElementById(entry.panelId);
+    var isOpen = panel.classList.contains('is-open');
+
+    Object.keys(panelMap).forEach(function(k) {
+      var e = panelMap[k];
+      var p = document.getElementById(e.panelId);
+      var c = document.getElementById(e.cardId);
+      if (e.panelId !== entry.panelId) {
+        p.classList.remove('is-open');
+        c.classList.remove('is-open');
+        updateHint(c, false);
+      }
+    });
+
+    panel.classList.toggle('is-open', !isOpen);
+    cardEl.classList.toggle('is-open', !isOpen);
+    updateHint(cardEl, !isOpen);
+
+    if (!isOpen) {
+      setTimeout(function() {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    }
+  }
+
+  function doExport() {
+    var start = document.getElementById('rpt-start') ? document.getElementById('rpt-start').value : '<%= startDate %>';
+    var end   = document.getElementById('rpt-end')   ? document.getElementById('rpt-end').value   : '<%= endDate %>';
+    var btn   = document.getElementById('btn-export');
+    if (btn) {
+      btn.textContent = '⏳ Gerando...';
+      btn.disabled = true;
+      setTimeout(function() { btn.innerHTML = '📥 Exportar Excel'; btn.disabled = false; }, 3500);
+    }
+    window.location.href = '/reports/loans/export?start=' + start + '&end=' + end;
+  }
+
+  document.querySelectorAll('.stat-card').forEach(function(card) {
+    card.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); card.click(); }
+    });
+  });
+</script>
+
+<%- include("../partials/footer") %>

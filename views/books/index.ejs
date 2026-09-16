@@ -19,6 +19,11 @@
     <a href="/books/export" class="button accent">
       <span style="font-size:1.1rem">📊</span> Exportar CSV
     </a>
+    <form action="/books/clear" method="POST" style="margin: 0; display: inline-flex;" onsubmit="return confirmClearBooks()">
+      <button type="submit" class="danger" style="display:inline-flex; align-items:center; gap:8px;">
+        🗑️ Limpar Lista
+      </button>
+    </form>
   </div>
 
   <!-- Card de Cadastro Colapsável -->
@@ -153,6 +158,10 @@
       if (match) visible++;
     });
     document.getElementById('book-count').textContent = term ? `${visible} resultado(s)` : '';
+  }
+
+  function confirmClearBooks() {
+    return confirm("ATENÇÃO: Isso excluirá PERMANENTEMENTE todos os livros e suas respectivas cópias do acervo. Todos os registros de empréstimos também serão deletados.\\n\\nUm backup de segurança dos livros e empréstimos será criado automaticamente na pasta 'backups'.\\n\\nDeseja continuar?");
   }
 </script>
 

@@ -1,0 +1,89 @@
+<%
+  /*
+   * Partial: loan_detail_table.ejs
+   * Parâmetros esperados:
+   *   loans      - array de empréstimos detalhados
+   *   showReturn - boolean: true → mostra coluna "Devolvido em"
+   */
+%>
+<table style="min-width: 580px;">
+  <thead>
+    <tr>
+      <th>Livro (Cópia)</th>
+      <th>Locatário</th>
+      <th>Empréstimo</th>
+      <th>Devolução Prevista</th>
+      <% if (showReturn) { %>
+        <th>Devolvido em</th>
+      <% } else { %>
+        <th>Situação</th>
+      <% } %>
+    </tr>
+  </thead>
+  <tbody>
+    <% loans.forEach(function(loan) {
+      let isOverdue = loan.status === 'emprestado' && loan.days_late > 0;
+    %>
+      <tr class="<%= isOverdue ? 'row-overdue' : '' %>">
+
+        <!-- Livro -->
+        <td>
+          <span style="font-weight: 600;"><%= loan.book_title %></span>
+          <br/>
+          <span style="font-size: 0.78rem; color: var(--muted);">Cópia <%= loan.copy_id %></span>
+        </td>
+
+        <!-- Locatário -->
+        <td>
+          <%= loan.borrower_name %>
+          <br/>
+          <span style="font-size: 0.78rem; color: var(--muted);"><%= loan.borrower_type %></span>
+          <% if (loan.student_class) { %>
+            &nbsp;·&nbsp;
+            <span style="font-size: 0.78rem; color: var(--muted);"><%= loan.student_class %><%= loan.student_shift ? ' / ' + loan.student_shift : '' %></span>
+          <% } %>
+          <% if (loan.borrower_phone) { %>
+            <br/>
+            <a href="https://wa.me/55<%= loan.borrower_phone.replace(/\D/g,'') %>"
+               target="_blank"
+               style="font-size: 0.75rem; color: var(--primary);">
+              📞 <%= loan.borrower_phone %>
+            </a>
+          <% } %>
+        </td>
+
+        <!-- Data do empréstimo -->
+        <td style="white-space: nowrap;">
+          <%= new Date(loan.loan_date + 'T12:00:00').toLocaleDateString('pt-BR') %>
+        </td>
+
+        <!-- Data prevista de devolução -->
+        <td style="white-space: nowrap;">
+          <%= new Date(loan.due_date + 'T12:00:00').toLocaleDateString('pt-BR') %>
+        </td>
+
+        <!-- Coluna variável: devolvido em / situação -->
+        <% if (showReturn) { %>
+          <td style="white-space: nowrap;">
+            <% if (loan.return_date) { %>
+              <span class="status-pill is-returned">
+                <%= new Date(loan.return_date + 'T12:00:00').toLocaleDateString('pt-BR') %>
+              </span>
+            <% } else { %>
+              <span style="color: var(--muted); font-size: 0.85rem;">—</span>
+            <% } %>
+          </td>
+        <% } else { %>
+          <td>
+            <% if (isOverdue) { %>
+              <span class="badge-overdue">Vencido há <%= loan.days_late %> dia(s)</span>
+            <% } else { %>
+              <span class="status-pill is-active">No prazo</span>
+            <% } %>
+          </td>
+        <% } %>
+
+      </tr>
+    <% }) %>
+  </tbody>
+</table>

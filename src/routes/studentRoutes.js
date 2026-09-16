@@ -15,6 +15,7 @@ router.post("/import", upload.single("csvFile"), studentController.importCsv);
 router.post("/diagnose", upload.single("csvFile"), studentController.diagnoseCsv);
 router.post("/import/preview", upload.single("students_csv"), studentController.previewImport);
 router.post("/import/confirm", studentController.confirmImport);
+router.post("/clear", studentController.clearStudents);
 router.get("/:id/edit", studentController.editStudent);
 router.post("/", studentController.create);
 router.put("/:id", studentController.updateStudent);

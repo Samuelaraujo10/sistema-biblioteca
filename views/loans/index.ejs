@@ -53,16 +53,25 @@
   <% } %>
 
   <!-- Barra de Ações -->
-  <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+  <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center;">
     <button id="btn-toggle-form" class="accent" style="display:flex; align-items:center; gap:8px;">
       <span style="font-size:1.1rem">➕</span> Registrar Novo Empréstimo
     </button>
+    <a href="/reports/loans" class="button secondary" style="display:inline-flex; align-items:center; gap:8px;">
+      📊 Relatório
+    </a>
+    <form action="/loans/clear" method="POST" style="margin: 0; display: inline-flex;" onsubmit="return confirmClearLoans()">
+      <button type="submit" class="danger" style="display:inline-flex; align-items:center; gap:8px;">
+        🗑️ Limpar Registro
+      </button>
+    </form>
     <div style="flex-grow: 1; position: relative; min-width: 250px;">
       <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: var(--muted);">🔍</span>
       <input id="loan-search" type="text" placeholder="Pesquisar por livro, aluno ou status..."
         oninput="filterLoans(this.value)" style="padding-left: 42px; width: 100%;" />
     </div>
   </div>
+
 
   <!-- Card de Cadastro Colapsável -->
   <div id="form-card" class="card" style="margin-bottom: 28px; border-top: 4px solid var(--primary); padding: 0; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.4s var(--t), opacity 0.3s var(--t), padding 0.4s var(--t);">
@@ -222,6 +231,10 @@
 
     btnToggle.addEventListener('click', openForm);
     btnCancel.addEventListener('click', closeForm);
+
+  function confirmClearLoans() {
+    return confirm("ATENÇÃO: Isso excluirá PERMANENTEMENTE todo o histórico de empréstimos do sistema. Todos os livros pendentes serão marcados como disponíveis.\n\nUm backup de segurança dos empréstimos será criado automaticamente na pasta 'backups'.\n\nDeseja continuar?");
+  }
 
   function filterLoans(q) {
     const rows  = document.querySelectorAll('#loans-table tbody tr');

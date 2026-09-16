@@ -15,6 +15,11 @@
     <a href="/students/import" class="secondary" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
       <span style="font-size:1.1rem">CSV</span> Importar
     </a>
+    <form action="/students/clear" method="POST" style="margin: 0; display: inline-flex;" onsubmit="return confirmClearStudents()">
+      <button type="submit" class="danger" style="display:inline-flex; align-items:center; gap:8px;">
+        🗑️ Limpar Lista
+      </button>
+    </form>
     <div style="flex-grow: 1; position: relative; min-width: 250px;">
       <span style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: var(--muted);">🔍</span>
       <input id="student-search" type="text" placeholder="Pesquisar por nome, turma, turno ou matrícula..."
@@ -162,6 +167,10 @@
     document.getElementById('search-term-student').textContent = q;
     countEl.textContent = term ? `Filtrados: ${visible}` : `Total: ${rows.length}`;
     noRes.style.display = (term && visible === 0) ? 'block' : 'none';
+  }
+
+  function confirmClearStudents() {
+    return confirm("ATENÇÃO: Isso excluirá PERMANENTEMENTE todos os alunos cadastrados. Todos os registros de empréstimos associados a esses alunos também serão deletados.\\n\\nUm backup de segurança dos alunos e empréstimos será criado automaticamente na pasta 'backups'.\\n\\nDeseja continuar?");
   }
 </script>
 

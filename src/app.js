@@ -9,6 +9,7 @@ const studentRoutes = require("./routes/studentRoutes");
 const loanRoutes = require("./routes/loanRoutes");
 const staffRoutes = require("./routes/staffRoutes");
 const backupRoutes = require("./routes/backupRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 const authRoutes = require("./routes/authRoutes");
 const errorHandler = require("./middlewares/errorHandler");
 const { checkAuthenticated } = require("./middlewares/authMiddleware");
@@ -60,6 +61,7 @@ app.use("/staff", checkAuthenticated, staffRoutes);
 app.use("/loans", checkAuthenticated, loanRoutes);
 app.use("/", checkAuthenticated, homeRoutes);
 app.use("/backups", checkAuthenticated, backupRoutes);
+app.use("/reports", checkAuthenticated, reportRoutes);
 
 app.use(errorHandler);
 

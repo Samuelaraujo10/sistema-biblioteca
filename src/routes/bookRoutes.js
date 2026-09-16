@@ -12,6 +12,7 @@ router.get("/:id/edit", bookController.editBook);
 router.post("/", bookController.create);
 router.post("/import", upload.single("csvFile"), bookController.importCsv);
 router.post("/diagnose", upload.single("csvFile"), bookController.diagnoseCsv);
+router.post("/clear", bookController.clearBooks);
 router.put("/:id", bookController.updateBook);
 router.delete("/:id", bookController.remove);
 

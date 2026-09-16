@@ -353,6 +353,45 @@ const importCsv = async (req, res) => {
   }
 };
 
+const clearStudents = async (req, res) => {
+  try {
+    const backupService = require("../services/backupService");
+    const { run } = require("../models/baseModel");
+
+    // 1. Criar backups antes de limpar
+    await backupService.exportStudents();
+    await backupService.exportLoans();
+
+    // 2. Apagar registros de forma transacional para manter consistência
+    await run("BEGIN TRANSACTION");
+    try {
+      // Devolver cópias associadas a empréstimos de alunos
+      await run(`
+        UPDATE book_copies 
+        SET status = 'available' 
+        WHERE id IN (
+          SELECT copy_id FROM loans WHERE student_id IS NOT NULL
+        )
+      `);
+      // Deletar empréstimos associados a alunos
+      await run("DELETE FROM loans WHERE student_id IS NOT NULL");
+      // Deletar todos os alunos
+      await run("DELETE FROM students");
+      await run("COMMIT");
+    } catch (dbError) {
+      await run("ROLLBACK").catch(() => {});
+      throw dbError;
+    }
+
+    setFlash(req, "success", "Lista de alunos e seus respectivos empréstimos limpos com sucesso! Backups criados na pasta 'backups'.");
+    return res.redirect("/students");
+  } catch (error) {
+    console.error("Erro ao limpar alunos:", error);
+    setFlash(req, "error", "Erro ao limpar lista de alunos: " + error.message);
+    return res.redirect("/students");
+  }
+};
+
 module.exports = {
   index,
   importForm,
@@ -365,4 +404,5 @@ module.exports = {
   downloadTemplate,
   importCsv,
   diagnoseCsv,
+  clearStudents,
 };
