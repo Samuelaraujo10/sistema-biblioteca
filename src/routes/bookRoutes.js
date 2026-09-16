@@ -13,6 +13,7 @@ router.post("/", bookController.create);
 router.post("/import", upload.single("csvFile"), bookController.importCsv);
 router.post("/diagnose", upload.single("csvFile"), bookController.diagnoseCsv);
 router.post("/clear", bookController.clearBooks);
+router.post("/sync-covers", bookController.syncCovers);
 router.put("/:id", bookController.updateBook);
 router.delete("/:id", bookController.remove);
 

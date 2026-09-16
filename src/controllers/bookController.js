@@ -20,7 +20,7 @@ const create = async (req, res) => {
       if (isbn) {
         query = `isbn:${isbn}`;
       } else {
-        query = `intitle:${title}+inauthor:${author}`;
+        query = `intitle:${title}`;
       }
       // Se tiver globalThis.fetch usa ele, senão faz fallback seguro
       if (typeof fetch === 'function') {
@@ -318,4 +318,55 @@ const clearBooks = async (req, res) => {
   }
 };
 
-module.exports = { index, create, editBook, updateBook, remove, exportExcel, downloadTemplate, importCsv, diagnoseCsv, clearBooks };
+const syncCovers = async (req, res) => {
+  try {
+    const books = await bookModel.listAll();
+    const booksWithoutCover = books.filter(b => !b.cover_url);
+    
+    let updatedCount = 0;
+
+    for (const book of booksWithoutCover) {
+      let query = '';
+      if (book.isbn && !book.isbn.startsWith('AUTO')) {
+        query = `isbn:${book.isbn}`;
+      } else {
+        query = `intitle:${book.title}`;
+      }
+      
+      try {
+        if (typeof fetch === 'function') {
+          const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}`);
+          const data = await response.json();
+          if (data.items && data.items.length > 0) {
+            const volumeInfo = data.items[0].volumeInfo;
+            if (volumeInfo.imageLinks && volumeInfo.imageLinks.thumbnail) {
+              const cover_url = volumeInfo.imageLinks.thumbnail.replace('http:', 'https:');
+              await bookModel.updateCover(book.id, cover_url);
+              updatedCount++;
+            }
+          }
+        }
+      } catch (apiError) {
+        console.error(`Erro ao buscar capa para o livro ${book.id}:`, apiError);
+      }
+      
+      // Pequeno delay para evitar rate limit do Google Books API
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    req.session.flash = {
+      type: "success",
+      message: `Sincronização concluída! ${updatedCount} capas foram atualizadas de um total de ${booksWithoutCover.length} livros sem capa.`
+    };
+    return res.redirect("/books");
+  } catch (error) {
+    console.error("Erro ao sincronizar capas:", error);
+    req.session.flash = {
+      type: "error",
+      message: "Erro ao sincronizar capas: " + error.message
+    };
+    return res.redirect("/books");
+  }
+};
+
+module.exports = { index, create, editBook, updateBook, remove, exportExcel, downloadTemplate, importCsv, diagnoseCsv, clearBooks, syncCovers };

@@ -19,6 +19,11 @@
     <a href="/books/export" class="button accent">
       <span style="font-size:1.1rem">📊</span> Exportar CSV
     </a>
+    <form action="/books/sync-covers" method="POST" style="margin: 0; display: inline-flex;" onsubmit="return confirm('Deseja buscar as capas de todos os livros sem capa? Isso pode demorar um pouco dependendo da quantidade de livros.')">
+      <button type="submit" class="secondary" style="display:inline-flex; align-items:center; gap:8px;">
+        🖼️ Buscar Capas Ausentes
+      </button>
+    </form>
     <form action="/books/clear" method="POST" style="margin: 0; display: inline-flex;" onsubmit="return confirmClearBooks()">
       <button type="submit" class="danger" style="display:inline-flex; align-items:center; gap:8px;">
         🗑️ Limpar Lista

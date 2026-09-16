@@ -44,4 +44,6 @@ const countAvailableCopies = (bookId) =>
 
 const remove = (id) => run("DELETE FROM books WHERE id = ?", [id]);
 
-module.exports = { listAll, getById, create, update, createCopies, listAvailableCopies, countAvailableCopies, remove };
+const updateCover = (id, cover_url) => run("UPDATE books SET cover_url = ? WHERE id = ?", [cover_url, id]);
+
+module.exports = { listAll, getById, create, update, createCopies, listAvailableCopies, countAvailableCopies, remove, updateCover };
